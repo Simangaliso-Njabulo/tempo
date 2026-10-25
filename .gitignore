@@ -20,6 +20,9 @@ blob-report/
 *.local
 *.pem
 
+# Isolated worktrees
+.worktrees/
+
 # Editor and OS noise
 .DS_Store
 Thumbs.db
