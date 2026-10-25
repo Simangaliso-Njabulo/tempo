@@ -1,6 +1,6 @@
 # Design
 
-**Status:** proposed. The combined design package is awaiting approval.
+**Status:** approved 2026-10-25 (D-028). The exhaustive implementation spec is drafted for review in `docs/superpowers/specs/2026-10-25-tempo-design.md`.
 
 This folder holds the design source of truth for TEMPO. It is intentionally separate from the reference library: the design contract records what TEMPO should feel like; the reference library records the standards and platform documentation that shape those decisions.
 
@@ -10,12 +10,20 @@ This folder holds the design source of truth for TEMPO. It is intentionally sepa
 - [Feel board](feel-board.html) — a visual study of the dark and light phone views, timeline blocks, reflow preview, and scoped sheet. Open it in a browser.
 - [Decision log](decisions.md) — every settled, proposed, or pending decision, with an ID and source.
 
+## Approved defaults
+
+- Reflow defaults to auto-preview + one-tap apply; auto-apply is opt-in.
+- 44 pt targets, 88 px/hour timeline, compact sub-30-minute treatment.
+- Install card after the second real plan; never on first launch.
+- Lightweight close-the-day sheet; quiet midnight carry-over.
+- No horizontal swipe, haptics, sound, push, or analytics.
+- iOS 18.4+ baseline; primary testing on iOS 26.x.
+- Geist Sans for display and UI, with system fallback.
+
 ## What is still pending
 
-- Final approval of the combined design package (Parts 1–4).
-- The reflow default: auto-preview + one-tap apply, or auto-apply.
-- Formal acceptance of the Part 4 defaults: 44 pt targets, 88 px/hour, install card timing, close-the-day sheet, no horizontal swipe, no haptics/sound/push/analytics, and the iOS 18.4+ baseline.
-- The final spec in `docs/superpowers/specs/` and the implementation plan in `docs/superpowers/plans/`.
+- The final approved spec in `docs/superpowers/specs/`.
+- The implementation plan in `docs/superpowers/plans/`.
 
 ## Design rules
 

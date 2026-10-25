@@ -1,6 +1,7 @@
 # TEMPO — Design Part 4: The Feel Contract
 
-Status: Proposed. Typography direction updated 2026-10-25 to Geist Sans (modern minimalist). This extends Design Parts 1–3 and does not replace them.  
+Status: Approved 2026-10-25 (D-028). Typography direction updated 2026-10-25 to Geist Sans (modern minimalist). This extends Design Parts 1–3 and is consolidated into the implementation spec.
+
 Date: 2026-10-25
 
 Reference library: `docs/reference/README.md`. Source map: `docs/reference/source-map.md`. The citations live there; this document records the conclusions.

@@ -2,17 +2,17 @@
 
 TEMPO is a calm, offline-first daily planner for iPhone. Brain-dump first, then drag tasks onto a vertical timeline. Plan the day in under 60 seconds — and let the plan survive slippage.
 
-**Status:** design phase. No app code yet. The design package is awaiting approval; implementation starts only after the spec and plan are approved.
+**Status:** design approved 2026-10-25. No app code yet. The exhaustive spec is drafted for review; implementation starts only after the spec and plan are approved.
 
 ## Source of truth
 
 Read in this order:
 
-1. **Approved product spec** — `docs/superpowers/specs/` (pending approval)
+1. **Product spec** — `docs/superpowers/specs/2026-10-25-tempo-design.md` (draft for review)
 2. **Design contract** — `docs/design/feel-contract.md`
 3. **Decision log** — `docs/design/decisions.md`
 4. **Reference library** — `docs/reference/README.md`
-5. **Implementation plan** — `docs/superpowers/plans/` (pending approval)
+5. **Implementation plan** — `docs/superpowers/plans/` (pending)
 
 If a change conflicts with a higher layer, stop and record a decision instead of silently diverging from the agreed direction.
 
@@ -64,10 +64,9 @@ Open `docs/design/feel-board.html` directly in a browser. It loads Geist from Go
 
 ## Next
 
-1. Approve or revise the combined design package, especially the reflow default and the Part 4 defaults.
-2. Write the approved spec to `docs/superpowers/specs/`.
-3. Write the implementation plan and get it approved.
-4. Start implementation.
+1. Review the draft spec in `docs/superpowers/specs/2026-10-25-tempo-design.md`.
+2. Write the implementation plan and get it approved.
+3. Start implementation.
 
 ## License
 

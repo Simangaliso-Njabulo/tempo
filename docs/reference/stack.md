@@ -47,10 +47,10 @@ Rules:
 
 - `Task` — the thing to do, independent of when it is scheduled.
 - `Block` — a placed interval on a day; references a task or routine.
-- `Routine` — a recurring template with a preferred time and anchor behavior.
-- `RoutineException` — a skip, move, or override for one occurrence.
-- `Settings` — theme, time format, reminders, install state, loop pause.
-- `Meta` — schema version, last backup, migration state.
+- `Routine` — a recurring tray item with a preferred time and anchor behavior; the user places it manually (D-029).
+- `RoutineException` — a one-day skip for a routine occurrence in v1; future move/override fields may be reserved but are not exposed.
+- `Settings` — theme, time format, reflow/reminder preferences, install and backup state.
+- `Meta` — schema version, last active date, real-plan dates, last backup, migration state.
 
 Dates are local `YYYY-MM-DD` keys. Times are minute-of-day integers. Display formatting follows locale and the user’s 12/24-hour setting.
 
