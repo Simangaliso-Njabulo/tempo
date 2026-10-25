@@ -70,11 +70,11 @@ When in doubt, raise the risk. A false `risk:low` is worse than an unnecessary r
 
 Use the first available model that can complete the task within the guardrails:
 
-1. `deepseek-v4.1-flash-free`
-2. `glm-5.3-flash-free`
-3. `mimo-v2.6-flash-free`
-4. `flint-40b-free`
-5. local `qwen2.5-coder:7b` (unavailable until Ollama and the model are installed)
+1. `opencode/deepseek-v4.1-flash-free`
+2. `opencode/glm-5.3-flash-free`
+3. `opencode/mimo-v2.6-flash-free`
+4. `opencode/flint-40b-free`
+5. local `ollama/qwen2.5-coder:7b` (unavailable until Ollama and the model are installed)
 
 If the model cannot produce a change that passes the gates without exceeding the limits, stop and leave a comment on the issue instead of forcing a PR.
 

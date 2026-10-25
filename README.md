@@ -2,7 +2,7 @@
 
 TEMPO is a calm, offline-first daily planner for iPhone. Brain-dump first, then drag tasks onto a vertical timeline. Plan the day in under 60 seconds — and let the plan survive slippage.
 
-**Status:** design and spec approved 2026-10-25. No app code yet. The implementation plan is being written; implementation starts only after the plan is approved.
+**Status:** design and spec approved 2026-10-25. No app code yet. The app and operations plans are complete and awaiting approval; implementation starts only after both are approved.
 
 ## Source of truth
 
@@ -12,7 +12,7 @@ Read in this order:
 2. **Design contract** — `docs/design/feel-contract.md`
 3. **Decision log** — `docs/design/decisions.md`
 4. **Reference library** — `docs/reference/README.md`
-5. **Implementation plan** — `docs/superpowers/plans/` (pending)
+5. **Implementation plans** — `docs/superpowers/plans/` (complete, awaiting approval)
 
 If a change conflicts with a higher layer, stop and record a decision instead of silently diverging from the agreed direction.
 

@@ -1089,10 +1089,10 @@ Algorithm:
 3. Build `obstacles` = all blocks except the moving block that are anchored, completed, or start before `targetStartMin`. A movable block that starts before the target cannot be shifted forward without moving earlier, so it is an obstacle for this drop.
 4. If `[targetStart, targetEnd)` overlaps an obstacle, search outward in 5-minute increments for the nearest valid start that does not overlap an obstacle. Prefer the direction of the drag; if tied, prefer the earlier start. If none exists, reject the drop with “No open slot.”
 5. Place the moving block at the resolved start/duration.
-6. Resolve the blocks after the moving block using the same waterfall as §9.5.2:
+6. Resolve all blocks at or after the resolved moving start using the same waterfall as §9.5.2:
    - `cursor = movingBlock.end`.
    - Anchored/completed blocks stay; set `cursor = max(cursor, block.endMin)`. Fixed blocks never move and may be skipped if they end before the cursor.
-   - Movable blocks shift to the earliest valid start at or after `max(originalStart, cursor)` that fits around anchors/completed blocks.
+   - Movable blocks shift to the earliest valid start at or after `max(originalStart, cursor)` that fits around anchors/completed blocks. This includes movable blocks that originally started between the target and the moving block’s old start.
    - If a movable block cannot fit, reject the entire move and restore the previous state. The ghost previews every shift before the drop.
 7. The drop commits the moving block and all shifts together. One undo entry. A toast names the new time.
 8. Blocks that start after the target may shift forward. Blocks that start before the target never shift; they are obstacles. This prevents a move from silently rewriting earlier work.
