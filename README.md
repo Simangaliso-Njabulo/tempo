@@ -2,13 +2,13 @@
 
 TEMPO is a calm, offline-first daily planner for iPhone. Brain-dump first, then drag tasks onto a vertical timeline. Plan the day in under 60 seconds — and let the plan survive slippage.
 
-**Status:** design approved 2026-10-25. No app code yet. The exhaustive spec is drafted for review; implementation starts only after the spec and plan are approved.
+**Status:** design and spec approved 2026-10-25. No app code yet. The implementation plan is being written; implementation starts only after the plan is approved.
 
 ## Source of truth
 
 Read in this order:
 
-1. **Product spec** — `docs/superpowers/specs/2026-10-25-tempo-design.md` (draft for review)
+1. **Product spec** — `docs/superpowers/specs/2026-10-25-tempo-design.md` (approved 2026-10-25)
 2. **Design contract** — `docs/design/feel-contract.md`
 3. **Decision log** — `docs/design/decisions.md`
 4. **Reference library** — `docs/reference/README.md`
@@ -53,7 +53,7 @@ The short rule: **build from the references, cite them in the change, and update
 │  ├─ design/                    # feel contract, visual board, decision log
 │  ├─ reference/                 # living reference library and local snapshots
 │  │  └─ apple-hig/              # downloaded Apple HIG pages
-│  └─ superpowers/               # spec and implementation plan (pending approval)
+│  └─ superpowers/               # approved spec and implementation plan
 ├─ README.md
 └─ .gitignore
 ```
@@ -64,9 +64,9 @@ Open `docs/design/feel-board.html` directly in a browser. It loads Geist from Go
 
 ## Next
 
-1. Review the draft spec in `docs/superpowers/specs/2026-10-25-tempo-design.md`.
-2. Write the implementation plan and get it approved.
-3. Start implementation.
+1. Review and approve the implementation plan in `docs/superpowers/plans/`.
+2. Build the app from the approved spec and plan.
+3. Run the quality gates and the low-risk improvement loop.
 
 ## License
 

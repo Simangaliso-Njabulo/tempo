@@ -1,6 +1,6 @@
 # Design
 
-**Status:** approved 2026-10-25 (D-028). The exhaustive implementation spec is drafted for review in `docs/superpowers/specs/2026-10-25-tempo-design.md`.
+**Status:** design package approved 2026-10-25 (D-028); the implementation spec is approved in `docs/superpowers/specs/2026-10-25-tempo-design.md`.
 
 This folder holds the design source of truth for TEMPO. It is intentionally separate from the reference library: the design contract records what TEMPO should feel like; the reference library records the standards and platform documentation that shape those decisions.
 
@@ -22,7 +22,6 @@ This folder holds the design source of truth for TEMPO. It is intentionally sepa
 
 ## What is still pending
 
-- The final approved spec in `docs/superpowers/specs/`.
 - The implementation plan in `docs/superpowers/plans/`.
 
 ## Design rules

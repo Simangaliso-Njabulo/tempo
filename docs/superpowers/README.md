@@ -4,14 +4,14 @@ The final product spec and implementation plan are written **after** the combine
 
 ## Planned paths
 
-- Spec: `docs/superpowers/specs/2026-10-25-tempo-design.md` — the product, UX, architecture, data, quality, and loop contract. Draft for review until the user approves it.
-- Plan: `docs/superpowers/plans/` — the ordered implementation plan with review checkpoints.
+- Spec: `docs/superpowers/specs/2026-10-25-tempo-design.md` — the approved product, UX, architecture, data, quality, and loop contract.
+- Plan: `docs/superpowers/plans/` — the ordered implementation plan with review checkpoints (in progress).
 
 ## Approval gate
 
 1. The design package is approved (D-028, 2026-10-25).
 2. The spec is written from the approved package and the decision log.
-3. The spec is self-reviewed and approved by the user.
+3. The spec is self-reviewed and approved by the user (2026-10-25).
 4. The implementation plan is written and approved.
 5. Implementation begins.
 

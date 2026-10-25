@@ -5,11 +5,12 @@ This is the entry point for every AI agent or human contributor working on TEMPO
 ## Read first
 
 1. `README.md` — what TEMPO is and where the source of truth lives.
-2. `docs/design/feel-contract.md` — the approved/proposed product feel and quality bar.
+2. `docs/design/feel-contract.md` — the approved product feel and quality bar.
 3. `docs/design/decisions.md` — the decisions that have been settled or proposed.
 4. `docs/reference/README.md` — the canonical reference library.
 5. `docs/reference/source-map.md` — what to read before changing a specific area.
-6. `docs/superpowers/` — the approved spec and implementation plan, once they exist.
+6. `docs/superpowers/specs/2026-10-25-tempo-design.md` — the approved implementation contract.
+7. `docs/superpowers/plans/` — the implementation plan and task checklists.
 
 ## The reference rule
 

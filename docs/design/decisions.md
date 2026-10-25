@@ -43,8 +43,8 @@ If you change a decision, update this file, the feel contract, and any related r
 | D-026 | Documentation is part of the product: short visual human docs plus exhaustive AI docs, with a permanent reference library. | Accepted | User request 2026-10-25; [Reference library](../reference/README.md) |
 | D-027 | The now line is the only thing that moves on its own. Everything else moves only when the user moves it. | Settled | Brand motif; [feel contract](feel-contract.md#2-the-design-thesis) |
 | D-028 | The combined design package and recommended Part 4 defaults are approved. Reflow defaults to auto-preview + one-tap apply; auto-apply is opt-in. | Accepted | User: “Proceed,” 2026-10-25 |
-| D-029 | Routines are recurring tray items, not auto-materialized timeline blocks. The user places them manually; placing creates an anchored routine block. A routine can be skipped for one day via a `RoutineException`. | Proposed | Clarifies D-004/D-005 and the approved tray behavior; becomes accepted on spec approval |
-| D-030 | Drag is direct manipulation: the ghost previews the landing and required shifts; the drop commits the move and shifts as one undoable action. The separate reflow preview bar is reserved for overrun/slippage. | Proposed | Clarifies the feel contract’s drag choreography; becomes accepted on spec approval |
+| D-029 | Routines are recurring tray items, not auto-materialized timeline blocks. The user places them manually; placing creates an anchored routine block. A routine can be skipped for one day via a `RoutineException`. | Accepted | Spec approved 2026-10-25; clarifies D-004/D-005 and the approved tray behavior |
+| D-030 | Drag is direct manipulation: the ghost previews the landing and required shifts; the drop commits the move and shifts as one undoable action. The separate reflow preview bar is reserved for overrun/slippage. | Accepted | Spec approved 2026-10-25; clarifies the feel contract’s drag choreography |
 
 ## Change protocol
 

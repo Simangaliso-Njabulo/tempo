@@ -1,6 +1,6 @@
 # TEMPO — Product and Implementation Spec
 
-- **Status:** Draft for user review. The design package is approved (D-028, 2026-10-25); this spec consolidates it and must be approved before the implementation plan is written.
+- **Status:** Approved 2026-10-25. The design package (D-028) and this spec are the implementation contract; the implementation plan is in progress.
 - **Date:** 2026-10-25
 - **Product:** TEMPO — a calm, offline-first daily planner for one human day.
 - **Target:** Installable iPhone Home Screen PWA, iOS 18.4+, primary testing on iOS 26.x.
@@ -2783,15 +2783,15 @@ These are not product open questions. They are technical choices the implementat
 
 None after D-028 and this spec, except:
 
-- D-029 and D-030 are clarifications recorded after D-028. They become accepted when this spec is approved.
+- D-029 and D-030 were accepted with this spec on 2026-10-25.
 - The license is TBD before the first public release.
 - If the user wants routines auto-materialized, notes, calendar integration, auto-scheduling, sync, or push, that requires a new decision and a spec change. Do not implement it from the deferred list.
 
 ### 23.4 Approval
 
-The design package was approved on 2026-10-25 (D-028). This spec is the consolidated implementation contract and is currently **draft for review**.
+The design package was approved on 2026-10-25 (D-028). This spec was approved on 2026-10-25 and is the implementation contract.
 
-By approving this spec:
+Approval means:
 
 1. The product behavior in §4–§9 and the acceptance criteria in §22 are accepted.
 2. D-029 (routines are tray items, manually placed) and D-030 (drag ghost is the preview; drop commits the move and shifts) are accepted.
@@ -2800,10 +2800,10 @@ By approving this spec:
 
 ```text
 Design package approved: 2026-10-25 (D-028)
-Spec status:              draft for review
-Spec approved by:         ______________________________
-Spec approved on:         ______________________________
-Implementation plan:      pending
+Spec status:              approved
+Spec approved by:         User ("Proceed"), 2026-10-25
+Spec approved on:         2026-10-25
+Implementation plan:      in progress
 ```
 
 If a future change conflicts with this spec, add a new decision to `docs/design/decisions.md`, update the feel contract and reference notes in the same change, and ask before implementing. Do not silently choose a different product.
