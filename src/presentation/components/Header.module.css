@@ -1,0 +1,36 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--tempo-space-3);
+  min-height: 56px;
+}
+
+.brand {
+  margin-right: auto;
+  font-family: var(--tempo-font-display);
+  font-size: var(--tempo-font-size-title);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--tempo-space-2);
+}
+
+.action {
+  min-height: var(--tempo-hit-target);
+  padding: 0 var(--tempo-space-3);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-pill);
+  background: transparent;
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-footnote);
+}
+
+.action:hover,
+.action:focus-visible {
+  color: var(--tempo-color-text-primary);
+  border-color: var(--tempo-color-accent-brand);
+}

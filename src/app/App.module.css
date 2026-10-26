@@ -1,4 +1,12 @@
-.lead {
-  margin: 0;
-  padding: var(--tempo-space-4);
+.dayHead {
+  display: grid;
+  gap: var(--tempo-space-2);
+  padding: var(--tempo-space-2) var(--tempo-space-4) var(--tempo-space-1);
+}
+
+.dayBody {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
 }

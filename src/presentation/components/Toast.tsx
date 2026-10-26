@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import styles from './Toast.module.css';
 
 interface ToastState {
@@ -21,6 +29,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToast({ id: Date.now(), message, actionLabel: action?.label, onAction: action?.onAction });
   }, []);
 
+  // The context value is memoised so showing a toast does not hand every
+  // consumer a new object. Consumers react to `show`, which is stable; the
+  // toast itself renders from local state.
+  const api = useMemo(() => ({ show }), [show]);
+
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 5_000);
@@ -28,7 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   return (
-    <ToastContext.Provider value={{ show }}>
+    <ToastContext.Provider value={api}>
       {children}
       {toast ? (
         <div className={styles.toast} role="status" aria-live="polite">

@@ -1,0 +1,6 @@
+.summary {
+  margin: 0;
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-footnote);
+  font-variant-numeric: tabular-nums;
+}
