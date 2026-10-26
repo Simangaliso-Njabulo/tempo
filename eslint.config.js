@@ -13,9 +13,11 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: { projectService: false },
       globals: {
+        console: 'readonly',
         document: 'readonly',
         localStorage: 'readonly',
         matchMedia: 'readonly',
+        process: 'readonly',
         window: 'readonly',
       },
     },

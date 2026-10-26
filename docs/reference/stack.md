@@ -56,6 +56,14 @@ Rules:
 
 Dates are local `YYYY-MM-DD` keys. Times are minute-of-day integers. Display formatting follows locale and the user’s 12/24-hour setting.
 
+## PWA build notes
+
+- `vite-plugin-pwa` is a dev dependency. It generates `manifest.webmanifest`, `sw.js`, and the Workbox precache manifest through `generateSW`.
+- `workbox-window` is a dev dependency. It is the runtime helper behind `virtual:pwa-register/react`; registration is explicit in the update toast (Task 5.2), never an injected inline script.
+- `registerType: 'prompt'` with `skipWaiting: false` and `clientsClaim: false`: a new worker waits until the user chooses Reload.
+- `public/boot.css` is the only pre-hydration stylesheet. `public/theme-boot.js` is a same-origin classic script that applies the stored theme before paint. Neither weakens `style-src 'self'` or `script-src 'self'`.
+- The production CSP meta is injected only for `build`, because the Vite dev server needs websocket and inline behaviour. `npm run verify:pwa` checks the built artifact for the CSP, the manifest, the service worker, the icons, and the absence of a third-party origin.
+
 ## Testing
 
 | Level | Scope |
