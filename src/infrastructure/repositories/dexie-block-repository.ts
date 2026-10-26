@@ -6,6 +6,7 @@ import type { TempoDb } from '../db/tempo-db';
 export class DexieBlockRepository implements BlockRepository {
   constructor(private readonly db: TempoDb) {}
   listByDate(date: LocalDate) { return this.db.blocks.where('date').equals(date).sortBy('startMin'); }
+  listByTask(taskId: string) { return this.db.blocks.where('taskId').equals(taskId).toArray(); }
   get(id: string) { return this.db.blocks.get(id); }
   async put(block: Block) { await this.db.blocks.put(block); }
   async bulkPut(blocks: Block[]) { await this.db.blocks.bulkPut(blocks); }
