@@ -57,4 +57,5 @@ export interface AppServices {
   importBackup: ReturnType<typeof makeImportBackup>;
   exportIcs: ReturnType<typeof makeExportIcs>;
   updateSettings: ReturnType<typeof makeUpdateSettings>;
+  resetAll: () => Promise<void>;
 }

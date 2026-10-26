@@ -24,6 +24,7 @@ import { makeExportBackup } from '../application/use-cases/export-backup';
 import { makeImportBackup } from '../application/use-cases/import-backup';
 import { makeExportIcs } from '../application/use-cases/export-ics';
 import { makeUpdateSettings } from '../application/use-cases/update-settings';
+import { DexieResetGateway } from '../infrastructure/db/dexie-reset-gateway';
 import { createTempoDb } from '../infrastructure/db/tempo-db';
 import { DexieUnitOfWork } from '../infrastructure/db/unit-of-work';
 import { backupCodec } from '../infrastructure/export/backup-codec';
@@ -56,6 +57,7 @@ export function createContainer(): AppServices {
   const calendar = new BrowserCalendarExportGateway();
   const share = new BrowserShareGateway();
   const storage = new BrowserStorageGateway();
+  const reset = new DexieResetGateway(db, uow);
 
   return {
     clock,
@@ -87,5 +89,6 @@ export function createContainer(): AppServices {
     importBackup: makeImportBackup({ backup, codec: backupCodec }),
     exportIcs: makeExportIcs({ blocks, settings, calendar, share, clock }),
     updateSettings: makeUpdateSettings({ settings, clock }),
+    resetAll: () => reset.resetAll(),
   };
 }

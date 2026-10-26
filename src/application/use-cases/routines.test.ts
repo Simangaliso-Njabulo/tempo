@@ -110,6 +110,13 @@ it('places a routine once, respects due days and skips, and updates it', async (
 
     const updated = await h.update({ id: routine.id, patch: { title: '  Evening walk  ', preferredStartMin: 1020 } });
     expect(updated).toMatchObject({ title: 'Evening walk', preferredStartMin: 1020, active: true });
+    // Editing the routine changes the tray suggestion, never a placed block.
+    expect(await h.blocks.get(placed.blockId)).toMatchObject({
+      startMin: 480,
+      durationMin: 30,
+      routineId: routine.id,
+      title: 'Morning walk',
+    });
     await expect(h.update({ id: 'missing', patch: {} })).rejects.toMatchObject({ code: 'ROUTINE_NOT_FOUND' });
   } finally {
     await close(h.db);
