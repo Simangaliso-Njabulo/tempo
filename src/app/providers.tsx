@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { ServicesProvider, type Services } from '../presentation/providers/services';
+import type { AppServices } from '../application/services';
+import { ServicesProvider } from '../presentation/providers/services';
 
-export function Providers({ services, children }: { services: Services; children: ReactNode }) {
+export function Providers({ services, children }: { services: AppServices; children: ReactNode }) {
   return <ServicesProvider services={services}>{children}</ServicesProvider>;
 }
