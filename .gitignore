@@ -23,6 +23,10 @@ blob-report/
 # Isolated worktrees
 .worktrees/
 
+# Local loop state and pause switch
+.loop/
+PAUSE
+
 # Editor and OS noise
 .DS_Store
 Thumbs.db

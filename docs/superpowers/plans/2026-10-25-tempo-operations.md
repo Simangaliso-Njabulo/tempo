@@ -1783,7 +1783,10 @@ param(
   [switch]$DryRun
 )
 
-$ErrorActionPreference = 'Stop'
+# Windows PowerShell 5.1 turns native stderr (git progress, gh status) into an
+# error record. Keep cmdlet errors non-terminating and check $LASTEXITCODE
+# explicitly after every native command instead.
+$ErrorActionPreference = 'Continue'
 Set-StrictMode -Version Latest
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -1813,11 +1816,84 @@ function Invoke-Checked {
   if ($LASTEXITCODE -ne 0) { throw $Message }
 }
 
+function Get-State {
+  if (Test-Path $statePath) {
+    return Get-Content $statePath -Raw | ConvertFrom-Json
+  }
+  return [pscustomobject]@{ consecutiveFailures = 0; lastRunAt = $null; lastResult = $null }
+}
+
+function Save-State {
+  param($State)
+  $State | ConvertTo-Json | Set-Content -Path $statePath -Encoding utf8
+}
+
 function Reset-ModelChanges {
   # The run starts from a clean tree. Reset and remove untracked files so the
   # next model does not inherit a failed attempt. Ignored local state survives.
   Invoke-Checked { git reset --hard origin/main } 'Could not reset model changes.'
   Invoke-Checked { git clean -fd } 'Could not remove untracked model files.'
+}
+
+function Assert-Prerequisites {
+  if (-not $env:GH_TOKEN) { throw 'GH_TOKEN is not set for the loop user.' }
+  foreach ($command in @('git', 'gh', 'opencode', 'npm')) {
+    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "$command is not on PATH." }
+  }
+
+  $remotes = @(git remote)
+  if ($LASTEXITCODE -ne 0 -or $remotes -notcontains 'origin') {
+    throw 'No origin remote is configured. The loop cannot run until the repository is pushed.'
+  }
+
+  $null = gh auth status 2>&1
+  if ($LASTEXITCODE -ne 0) { throw 'gh is not authenticated for the loop user.' }
+}
+
+function Get-StringHash {
+  # Windows PowerShell 5.1 has no SHA256.HashData, so use the instance API.
+  param([string]$Text)
+  $sha = [Security.Cryptography.SHA256]::Create()
+  try {
+    return [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))
+  } finally {
+    $sha.Dispose()
+  }
+}
+
+function Test-CiGreen {
+  $json = gh run list --branch main --workflow CI --limit 1 --json conclusion
+  if ($LASTEXITCODE -ne 0) { return $false }
+  $runs = @($json | ConvertFrom-Json)
+  if ($runs.Count -eq 0) { return $false }
+  return $runs[0].conclusion -eq 'success'
+}
+
+function Test-DeployInProgress {
+  $json = gh run list --workflow Deploy --status in_progress --limit 1 --json databaseId
+  if ($LASTEXITCODE -ne 0) { return $false }
+  return @($json | ConvertFrom-Json).Count -gt 0
+}
+
+function Assert-IssueUnchanged {
+  param($Issue, [string]$ExpectedBodyHash, [string]$ExpectedRisk)
+
+  $json = gh issue view $Issue.number --json state,body,labels
+  if ($LASTEXITCODE -ne 0) { throw "Could not re-read issue #$($Issue.number)." }
+  $fresh = $json | ConvertFrom-Json
+
+  if ($fresh.state -ne 'OPEN') { throw "Issue #$($Issue.number) is no longer open." }
+
+  $labels = @($fresh.labels | ForEach-Object { $_.name })
+  if ($labels -notcontains 'loop:approved') { throw "Issue #$($Issue.number) lost the loop:approved label." }
+
+  $freshRisk = @($labels | Where-Object { $_ -like 'risk:*' })
+  if ($freshRisk.Count -ne 1 -or $freshRisk[0] -ne $ExpectedRisk) {
+    throw "Issue #$($Issue.number) changed its risk label during the run."
+  }
+
+  $actualHash = Get-StringHash -Text ([string]$fresh.body)
+  if ($actualHash -ne $ExpectedBodyHash) { throw "Issue #$($Issue.number) changed during the run." }
 }
 
 try {
@@ -1826,10 +1902,7 @@ try {
     exit 0
   }
 
-  if (-not $env:GH_TOKEN) { throw 'GH_TOKEN is not set for the loop user.' }
-  foreach ($command in @('git', 'gh', 'opencode', 'npm')) {
-    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "$command is not on PATH." }
-  }
+  Assert-Prerequisites
 
   if (Test-Path $lockPath) {
     $lock = Get-Content $lockPath -Raw | ConvertFrom-Json
@@ -1839,18 +1912,13 @@ try {
       Write-RunLog 'Another loop run holds the lock; exiting.'
       exit 0
     }
-    Remove-Item $lockPath -Force
+    Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
   }
 
   @{ pid = $PID; startedAt = (Get-Date).ToString('o') } |
     ConvertTo-Json | Set-Content -Path $lockPath -Encoding utf8
 
-  $state = if (Test-Path $statePath) {
-    Get-Content $statePath -Raw | ConvertFrom-Json
-  } else {
-    [pscustomobject]@{ consecutiveFailures = 0; lastRunAt = $null; lastResult = $null }
-  }
-
+  $state = Get-State
   if ([int]$state.consecutiveFailures -ge 3) {
     Write-RunLog 'Circuit breaker is open; a human must clear it.'
     exit 0
@@ -1861,26 +1929,28 @@ try {
   if ($status) { throw 'Working tree is dirty; refusing to run.' }
 
   Invoke-Checked { git fetch origin --prune } 'git fetch failed.'
+
   $currentBranch = git rev-parse --abbrev-ref HEAD
-  if ($currentBranch -ne 'main') { throw "Expected main, found $currentBranch." }
+  if ($LASTEXITCODE -ne 0 -or $currentBranch -ne 'main') { throw "Expected main, found $currentBranch." }
 
-  $behind = [int](git rev-list --count HEAD..origin/main)
-  if ($behind -gt 0) { throw 'main is behind origin/main.' }
+  $behind = git rev-list --count HEAD..origin/main
+  if ($LASTEXITCODE -ne 0) { throw 'Could not compare main with origin/main.' }
+  if ([int]$behind -gt 0) { throw 'main is behind origin/main.' }
 
-  $openPrs = [int](gh pr list --state open --label loop:pr --json number --jq 'length')
-  if ($openPrs -gt 0) {
+  $openPrJson = gh pr list --state open --label loop:pr --json number
+  if ($LASTEXITCODE -ne 0) { throw 'Could not list open loop pull requests.' }
+  if (@($openPrJson | ConvertFrom-Json).Count -gt 0) {
     Write-RunLog 'A loop PR is already open; exiting.'
     exit 0
   }
 
-  $mainRun = gh run list --branch main --workflow CI --limit 1 --json conclusion | ConvertFrom-Json
-  if ($mainRun.conclusion -ne 'success') { throw 'CI on main is not green.' }
+  if (-not (Test-CiGreen)) { throw 'CI on main is not green.' }
+  if (Test-DeployInProgress) { throw 'A deploy is in progress; refusing to run.' }
 
-  $deploys = gh run list --workflow Deploy --status in_progress --limit 1 --json databaseId | ConvertFrom-Json
-  if ($deploys) { throw 'A deploy is in progress; refusing to run.' }
-
-  $issues = gh issue list --state open --label loop:approved --limit 50 --json number,title,body,labels,url | ConvertFrom-Json
-  if (-not $issues) {
+  $issuesJson = gh issue list --state open --label loop:approved --limit 50 --json number,title,body,labels,url
+  if ($LASTEXITCODE -ne 0) { throw 'Could not list approved issues.' }
+  $issues = @($issuesJson | ConvertFrom-Json)
+  if ($issues.Count -eq 0) {
     Write-RunLog 'No approved issues; exiting.'
     exit 0
   }
@@ -1892,13 +1962,15 @@ try {
 
   if (-not $issue) { throw 'No approved issue has exactly one risk label.' }
 
-  $risk = ($issue.labels | Where-Object { $_.name -like 'risk:*' }).name
+  $risk = @($issue.labels | Where-Object { $_.name -like 'risk:*' })[0].name
   Write-RunLog "Selected issue #$($issue.number) [$risk] $($issue.title)"
 
   if ($DryRun) {
     Write-RunLog 'Dry run: no branch, model, or PR will be created.'
     exit 0
   }
+
+  $bodyHash = Get-StringHash -Text ([string]$issue.body)
 
   $slug = ($issue.title.ToLowerInvariant() -replace '[^a-z0-9]+', '-' -replace '^-|-$', '')
   if ([string]::IsNullOrWhiteSpace($slug)) { $slug = "issue-$($issue.number)" }
@@ -1981,15 +2053,20 @@ try {
   if ($files.Count -gt 12) { throw "Change touches $($files.Count) files; limit is 12." }
 
   $forbidden = @(
-    '^\.github/workflows/',
+    '^\.github/',
     '^scripts/loop/',
+    '^scripts/ops/',
+    '^security/',
     '^package\.json$',
     '^package-lock\.json$',
+    '^vite\.config\.',
     '^docs/design/decisions\.md$',
+    '^docs/security/',
+    '^docs/reference/security\.md$',
+    '^docs/reference/ai-development\.md$',
     '^docs/superpowers/specs/',
     '^docs/superpowers/plans/',
-    '^AGENTS\.md$',
-    '^\.github/dependabot\.yml$'
+    '^AGENTS\.md$'
   )
   $violations = @()
   foreach ($file in $files) {
@@ -1998,7 +2075,7 @@ try {
     }
   }
   if ($violations.Count -gt 0) {
-    throw "Protected path changed: $($violations -join ', ')"
+    throw "Protected path changed: $(@($violations | Sort-Object -Unique) -join ', ')"
   }
 
   $deleted = git diff --name-status origin/main |
@@ -2026,6 +2103,8 @@ try {
   Invoke-Checked { npm run test:e2e -- --project=webkit-iphone } 'End-to-end tests failed.'
   Invoke-Checked { npm run test:a11y -- --project=webkit-iphone } 'Accessibility tests failed.'
   Invoke-Checked { npm run test:visual -- --project=webkit-iphone } 'Visual regression failed.'
+
+  Assert-IssueUnchanged -Issue $issue -ExpectedBodyHash $bodyHash -ExpectedRisk $risk
 
   Invoke-Checked { git add -A } 'git add failed.'
   Invoke-Checked { git commit -m "$($issue.title) (#$($issue.number))" } 'git commit failed.'
@@ -2078,7 +2157,8 @@ Required for a visual change; see the issue.
     --head $branchName `
     --title "$($issue.title) (#$($issue.number))" `
     --body $prBody `
-    --label "loop:pr,$risk"
+    --label 'loop:pr' `
+    --label $risk
   if ($LASTEXITCODE -ne 0) { throw 'Could not open the pull request.' }
 
   $prNumber = [int](gh pr view $prUrl --json number --jq '.number')
@@ -2095,25 +2175,25 @@ Required for a visual change; see the issue.
     Write-RunLog 'Human review required; auto-merge not enabled.'
   }
 
-  gh issue comment $issue.number --body "The loop opened $prUrl using ``$modelUsed``. Risk: ``$risk``. $(if ($Manual) { 'Manual run; auto-merge is disabled.' } else { 'Auto-merge is enabled only for risk:low on green CI.' })"
+  $mode = if ($Manual) { 'Manual run; auto-merge is disabled.' } else { 'Auto-merge is enabled only for risk:low on green CI.' }
+  gh issue comment $issue.number --body "The loop opened $prUrl using ``$modelUsed``. Risk: ``$risk``. $mode"
+  if ($LASTEXITCODE -ne 0) { Write-RunLog 'The PR opened, but the issue comment failed.' }
 
   $state.consecutiveFailures = 0
   $state.lastRunAt = (Get-Date).ToString('o')
   $state.lastResult = 'pr-opened'
-  $state | ConvertTo-Json | Set-Content -Path $statePath -Encoding utf8
+  Save-State $state
   exit 0
 }
 catch {
   $message = $_.Exception.Message
   Write-RunLog "FAILED: $message"
 
-  $state = if (Test-Path $statePath) { Get-Content $statePath -Raw | ConvertFrom-Json } else {
-    [pscustomobject]@{ consecutiveFailures = 0; lastRunAt = $null; lastResult = $null }
-  }
+  $state = Get-State
   $state.consecutiveFailures = [int]$state.consecutiveFailures + 1
   $state.lastRunAt = (Get-Date).ToString('o')
   $state.lastResult = 'failed'
-  $state | ConvertTo-Json | Set-Content -Path $statePath -Encoding utf8
+  Save-State $state
 
   if ($startedBranch -and $branchName) {
     try {
@@ -2165,9 +2245,38 @@ The `PAUSE` switch is local and untracked. A human creates it to stop the loop a
 
 The loop is a maintainer tool. It is not shipped to users.
 
+## Status
+
+The runner and installer exist, but the scheduled task is **not active**. Activation requires a pushed repository, `GH_TOKEN`, green CI, the security checks, and branch protection. Until then the runner exits with an error and schedules nothing.
+
+## Preflight
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/install-scheduled-task.ps1
+```
+
+This checks the remote, `GH_TOKEN`, `gh`, and `opencode`. It never schedules anything.
+
+## Activate
+
+Only after the repository is pushed and `main` is green:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/install-scheduled-task.ps1 -Activate
+```
+
+The task runs at 08:00, 11:00, 14:00, 17:00, and 20:00 local time as the current user. A dedicated low-privilege Windows user is a human setup step; see `docs/security/agent-threat-model.md`.
+
 ## Pause
 
 Create `PAUSE` at the repository root. The next run exits without work. Delete it to resume.
+
+```powershell
+New-Item -ItemType File -Path PAUSE
+Remove-Item PAUSE
+```
+
+The circuit breaker also writes `PAUSE` after three consecutive failures.
 
 ## Circuit breaker
 
@@ -2187,9 +2296,23 @@ A manual run opens a PR but never auto-merges.
 powershell -ExecutionPolicy Bypass -File scripts/loop/run.ps1 -DryRun
 ```
 
+A dry run selects and prints the issue, then exits without a branch, model call, or PR.
+
+## Model ladder
+
+The runner tries free models in descending capability:
+
+1. `opencode/deepseek-v4.1-flash-free`
+2. `opencode/glm-5.3-flash-free`
+3. `opencode/mimo-v2.6-flash-free`
+4. `opencode/flint-40b-free`
+5. `ollama/qwen2.5-coder:7b`, only if Ollama is installed
+
+On a quota, rate limit, timeout, crash, or empty diff, it resets the working tree and tries the next model once. It never retries the same model in a run, never uses a paid fallback, and stops after five attempts.
+
 ## What the loop may touch
 
-Only the issue. It may not touch workflows, loop scripts, branch protection, release configuration, dependencies, the spec, the plans, or `AGENTS.md`. It may not delete or weaken tests.
+Only the issue. It may not touch workflows, loop scripts, security policy, branch protection, release configuration, dependencies, the spec, the plans, or `AGENTS.md`. It may not delete or weaken tests. The runner checks the changed files, the line count, the deleted tests, and the issue body after the model runs.
 
 ## Logs
 
@@ -2229,11 +2352,52 @@ git commit -m "feat: add guarded low-risk loop runner"
 `scripts/loop/install-scheduled-task.ps1`:
 
 ```powershell
+[CmdletBinding()]
+param(
+  [switch]$Activate
+)
+
 $ErrorActionPreference = 'Stop'
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $runner = Join-Path $root 'scripts\loop\run.ps1'
 if (-not (Test-Path $runner)) { throw "Runner not found: $runner" }
+
+$problems = @()
+
+$remotes = @(git -C $root remote)
+if ($LASTEXITCODE -ne 0 -or $remotes -notcontains 'origin') {
+  $problems += 'No origin remote. Push the repository before activating the loop.'
+}
+
+if (-not $env:GH_TOKEN) {
+  $problems += 'GH_TOKEN is not set for this user. Create a fine-grained token outside the repository.'
+} else {
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  $null = gh auth status 2>&1
+  $authExit = $LASTEXITCODE
+  $ErrorActionPreference = $previous
+  if ($authExit -ne 0) { $problems += 'gh is not authenticated. Run gh auth login or set GH_TOKEN correctly.' }
+}
+
+if (-not (Get-Command opencode -ErrorAction SilentlyContinue)) {
+  $problems += 'opencode is not on PATH.'
+}
+
+if ($problems.Count -gt 0) {
+  Write-Host 'The loop is not ready to activate:'
+  foreach ($problem in $problems) { Write-Host "  - $problem" }
+  if ($Activate) { throw 'Fix the problems above, then run the installer again.' }
+  Write-Host 'Preflight finished. Nothing was scheduled.'
+  exit 0
+}
+
+if (-not $Activate) {
+  Write-Host 'Preflight passed. Nothing was scheduled.'
+  Write-Host 'Re-run with -Activate only after CI, the security checks, and branch protection are green on main.'
+  exit 0
+}
 
 $argument = "-NoProfile -ExecutionPolicy Bypass -File `"$runner`""
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argument -WorkingDirectory $root
@@ -2257,7 +2421,8 @@ Register-ScheduledTask `
   -Force
 
 Write-Host 'Scheduled task installed: TEMPO low-risk loop'
-Write-Host 'Set GH_TOKEN in the loop user environment before the first run.'
+Write-Host 'Triggers at 08:00, 11:00, 14:00, 17:00, and 20:00 local time.'
+Write-Host 'The task runs as the current user. A dedicated low-privilege user is a human setup step.'
 ```
 
 Run it once, then verify in Task Scheduler:
@@ -2276,7 +2441,7 @@ Expected: triggers at 08:00, 11:00, 14:00, 17:00, and 20:00 local time. The task
 # Loop operations
 
 - Scheduler: Windows Task Scheduler, `TEMPO low-risk loop`.
-- Cadence: every 3 hours, 08:00-22:00 local.
+- Cadence: every 3 hours inside the 08:00–22:00 window (08:00, 11:00, 14:00, 17:00, 20:00 local). A run that overruns is not restarted.
 - One issue per run; one open `loop:pr` at a time.
 - `PAUSE` is checked before every run.
 - A local lock prevents overlapping runs.
@@ -2286,6 +2451,42 @@ Expected: triggers at 08:00, 11:00, 14:00, 17:00, and 20:00 local time. The task
 - The circuit breaker opens after 3 consecutive failures and writes `PAUSE`.
 - The loop token is least-privilege and lives in the user environment, never in the repository.
 - The loop never edits workflows, loop scripts, branch protection, release configuration, dependencies, the spec, the plans, or `AGENTS.md`.
+
+## Activation gate
+
+The scheduled task is not registered until all of the following are true:
+
+- The repository has an `origin` remote on GitHub.
+- `main` is green in the required-check workflow.
+- The five `security-*` checks exist and pass.
+- Branch protection requires all fourteen checks.
+- `GH_TOKEN` is set for the loop user with the least-privilege scopes.
+- A manual `-DryRun` selects exactly one approved issue.
+
+Run the preflight:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/install-scheduled-task.ps1
+```
+
+Run the dry run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/run.ps1 -DryRun
+```
+
+Only then register the task with `-Activate`.
+
+## Dedicated user
+
+The task runs as the signed-in user in this version. A dedicated low-privilege Windows user is a human setup step; record it in `docs/security/agent-threat-model.md` before enabling unattended runs on a shared machine.
+
+## Pause and recovery
+
+- Create `PAUSE` to stop the next run.
+- The circuit breaker writes `PAUSE` and opens a `loop:blocked` issue after three consecutive failures.
+- A human fixes the cause, deletes `PAUSE`, and resets `.loop/state.json` before resuming.
+- `.loop/` and `PAUSE` are untracked; they never appear in a commit.
 ```
 
 - [ ] **Step 3: Commit**
