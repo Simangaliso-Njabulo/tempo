@@ -1,0 +1,78 @@
+.hit {
+  position: absolute;
+  left: 64px;
+  right: 12px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.hit:active {
+  cursor: grabbing;
+}
+
+.leader {
+  position: absolute;
+  height: 0;
+  border-top: 1px solid var(--tempo-color-text-tertiary);
+  pointer-events: none;
+}
+
+.block {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-surface-2);
+  padding: 8px 10px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.task {
+  border-left: 3px solid var(--tempo-color-accent-text);
+}
+
+.focus {
+  border-left: 3px solid var(--tempo-color-accent-brand);
+}
+
+.routine {
+  border-left: 3px solid var(--tempo-color-routine);
+}
+
+.break {
+  border-left: 3px solid var(--tempo-color-break);
+}
+
+.done {
+  opacity: 0.55;
+}
+
+.dragging {
+  opacity: 0.35;
+}
+
+.title {
+  display: block;
+  font-weight: var(--tempo-font-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: block;
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-caption);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.handle {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 28px;
+  height: 28px;
+}
