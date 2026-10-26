@@ -6,8 +6,10 @@ import type { TempoDb } from '../db/tempo-db';
 export class DexieRoutineExceptionRepository implements RoutineExceptionRepository {
   constructor(private readonly db: TempoDb) {}
   listByDate(date: LocalDate) { return this.db.routineExceptions.where('date').equals(date).toArray(); }
+  listByRoutine(routineId: string) { return this.db.routineExceptions.where('routineId').equals(routineId).toArray(); }
   get(id: string) { return this.db.routineExceptions.get(id); }
   async put(exception: RoutineException) { await this.db.routineExceptions.put(exception); }
   async bulkPut(exceptions: RoutineException[]) { await this.db.routineExceptions.bulkPut(exceptions); }
   async delete(id: string) { await this.db.routineExceptions.delete(id); }
+  async bulkDelete(ids: string[]) { await this.db.routineExceptions.bulkDelete(ids); }
 }
