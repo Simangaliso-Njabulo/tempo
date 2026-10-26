@@ -22,6 +22,7 @@ import { TaskSheet } from '../presentation/components/TaskSheet';
 import { ToastProvider, useToast } from '../presentation/components/Toast';
 import { Timeline } from '../presentation/components/Timeline';
 import { Tray } from '../presentation/components/Tray';
+import { UpdateToast } from '../presentation/components/UpdateToast';
 import { useDayPlan } from '../presentation/hooks/use-day-plan';
 import { useDrag } from '../presentation/hooks/use-drag';
 import { useInstall } from '../presentation/hooks/use-install';
@@ -618,6 +619,7 @@ export function App() {
     <Providers services={services}>
       <ToastProvider>
         <Screen />
+        <UpdateToast />
       </ToastProvider>
     </Providers>
   );
