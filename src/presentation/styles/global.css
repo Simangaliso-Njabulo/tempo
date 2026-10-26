@@ -1,0 +1,62 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background: var(--tempo-color-bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--tempo-color-bg);
+  color: var(--tempo-color-text-primary);
+  font-family: var(--tempo-font-sans);
+  font-size: var(--tempo-font-size-body);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  min-width: var(--tempo-hit-target);
+  min-height: var(--tempo-hit-target);
+}
+
+:focus-visible {
+  outline: 2px solid var(--tempo-color-focus);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--tempo-color-accent-brand);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

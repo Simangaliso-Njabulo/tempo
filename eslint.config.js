@@ -8,9 +8,17 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
-    files: ['eslint.config.js', '*.config.js', '*.config.ts'],
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs', '*.config.ts'],
     extends: [tseslint.configs.disableTypeChecked],
-    languageOptions: { parserOptions: { projectService: false } },
+    languageOptions: {
+      parserOptions: { projectService: false },
+      globals: {
+        document: 'readonly',
+        localStorage: 'readonly',
+        matchMedia: 'readonly',
+        window: 'readonly',
+      },
+    },
   },
   {
     files: ['src/**/*.{ts,tsx}'],
