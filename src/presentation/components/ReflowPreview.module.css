@@ -1,0 +1,41 @@
+.bar {
+  position: sticky;
+  bottom: 0;
+  z-index: calc(var(--tempo-z-tray) + 1);
+  display: grid;
+  gap: var(--tempo-space-2);
+  padding: var(--tempo-space-3) var(--tempo-space-4) calc(var(--tempo-space-3) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--tempo-color-line);
+  background: var(--tempo-color-surface-1);
+  box-shadow: var(--tempo-shadow-float);
+}
+
+.bar strong {
+  display: block;
+}
+
+.bar span {
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-caption);
+}
+
+.actions {
+  display: flex;
+  gap: var(--tempo-space-2);
+}
+
+.apply,
+.dismiss {
+  flex: 1;
+  min-height: var(--tempo-hit-target);
+  border-radius: var(--tempo-radius-md);
+  border: 1px solid var(--tempo-color-line);
+  background: transparent;
+}
+
+.apply {
+  background: var(--tempo-color-accent-fill);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+}

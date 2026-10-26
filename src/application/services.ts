@@ -21,6 +21,7 @@ import type { makeCloseDay } from './use-cases/close-day';
 import type { makeCarryOver } from './use-cases/carry-over';
 import type { makeRestoreCloseDay } from './use-cases/restore-close-day';
 import type { makeRestoreCarryOver } from './use-cases/restore-carry-over';
+import type { makeRestoreDay } from './use-cases/restore-day';
 import type { makeExportBackup } from './use-cases/export-backup';
 import type { makeImportBackup } from './use-cases/import-backup';
 import type { makeExportIcs } from './use-cases/export-ics';
@@ -51,6 +52,7 @@ export interface AppServices {
   carryOver: ReturnType<typeof makeCarryOver>;
   restoreCloseDay: ReturnType<typeof makeRestoreCloseDay>;
   restoreCarryOver: ReturnType<typeof makeRestoreCarryOver>;
+  restoreDay: ReturnType<typeof makeRestoreDay>;
   exportBackup: ReturnType<typeof makeExportBackup>;
   importBackup: ReturnType<typeof makeImportBackup>;
   exportIcs: ReturnType<typeof makeExportIcs>;

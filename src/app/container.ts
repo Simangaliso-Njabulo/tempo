@@ -19,6 +19,7 @@ import { makeCloseDay } from '../application/use-cases/close-day';
 import { makeCarryOver } from '../application/use-cases/carry-over';
 import { makeRestoreCloseDay } from '../application/use-cases/restore-close-day';
 import { makeRestoreCarryOver } from '../application/use-cases/restore-carry-over';
+import { makeRestoreDay } from '../application/use-cases/restore-day';
 import { makeExportBackup } from '../application/use-cases/export-backup';
 import { makeImportBackup } from '../application/use-cases/import-backup';
 import { makeExportIcs } from '../application/use-cases/export-ics';
@@ -81,6 +82,7 @@ export function createContainer(): AppServices {
     carryOver: makeCarryOver({ tasks, blocks, meta, uow, clock }),
     restoreCloseDay: makeRestoreCloseDay({ tasks, blocks, uow }),
     restoreCarryOver: makeRestoreCarryOver({ tasks, blocks, uow }),
+    restoreDay: makeRestoreDay({ blocks, tasks, uow }),
     exportBackup: makeExportBackup({ backup, codec: backupCodec, share, meta, clock }),
     importBackup: makeImportBackup({ backup, codec: backupCodec }),
     exportIcs: makeExportIcs({ blocks, settings, calendar, share, clock }),
