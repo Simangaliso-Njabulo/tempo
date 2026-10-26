@@ -1,0 +1,150 @@
+.tray {
+  position: relative;
+  z-index: var(--tempo-z-tray);
+  background: var(--tempo-color-surface-1);
+  border-top: 1px solid var(--tempo-color-line);
+  padding: var(--tempo-space-2) var(--tempo-space-3) var(--tempo-space-3);
+  transition: max-height var(--tempo-motion-base) var(--tempo-motion-ease);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.collapsed {
+  max-height: 154px;
+}
+
+.expanded {
+  max-height: min(78dvh, 680px);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: var(--tempo-space-2);
+  min-height: var(--tempo-hit-target);
+}
+
+.handle,
+.planButton {
+  border: 0;
+  background: transparent;
+  color: var(--tempo-color-accent-text);
+  font-weight: 600;
+  padding: 0 var(--tempo-space-2);
+}
+
+.count {
+  color: var(--tempo-color-text-tertiary);
+  font-size: var(--tempo-font-size-caption);
+  margin-right: auto;
+}
+
+.brainDump {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--tempo-space-2);
+  margin: var(--tempo-space-1) 0 var(--tempo-space-2);
+}
+
+.brainDump input {
+  min-height: var(--tempo-hit-target);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-surface-2);
+  padding: 0 var(--tempo-space-3);
+}
+
+.brainDump button {
+  border: 0;
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-accent-fill);
+  color: #fff;
+  padding: 0 var(--tempo-space-4);
+  font-weight: 600;
+}
+
+.brainDump button:disabled {
+  opacity: 0.4;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tempo-space-1);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--tempo-space-1);
+}
+
+.chip {
+  flex: 1;
+  min-height: var(--tempo-hit-target);
+  text-align: left;
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-surface-2);
+  padding: var(--tempo-space-1) var(--tempo-space-2);
+  touch-action: none;
+}
+
+.chipTitle {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  color: var(--tempo-color-carry);
+  font-size: var(--tempo-font-size-caption);
+}
+
+.place,
+.skip {
+  min-height: var(--tempo-hit-target);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: transparent;
+  color: var(--tempo-color-text-secondary);
+  padding: 0 var(--tempo-space-2);
+}
+
+.skip {
+  color: var(--tempo-color-text-tertiary);
+}
+
+.routines {
+  margin-top: var(--tempo-space-3);
+  border-top: 1px solid var(--tempo-color-line);
+  padding-top: var(--tempo-space-2);
+}
+
+.routines h2 {
+  margin: 0 0 var(--tempo-space-2);
+  font-size: var(--tempo-font-size-body);
+}
+
+.empty {
+  margin: var(--tempo-space-2) 0;
+  color: var(--tempo-color-text-tertiary);
+  font-size: var(--tempo-font-size-caption);
+}
+
+.error {
+  margin: 0 0 var(--tempo-space-2);
+  color: var(--tempo-color-danger);
+  font-size: var(--tempo-font-size-caption);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
