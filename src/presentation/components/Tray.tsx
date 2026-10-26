@@ -12,6 +12,7 @@ import type { Task } from '../../domain/entities/task';
 import { isRoutineDue, isRoutinePlaced } from '../../domain/services/routine-occurrence';
 import type { LocalDate } from '../../domain/values/local-date';
 import { formatDuration, formatTime, type TimeFormat } from '../utils/format-time';
+import { Icon } from './Icon';
 import styles from './Tray.module.css';
 
 const DRAG_THRESHOLD = 8;
@@ -158,30 +159,38 @@ export function Tray({
         </p>
       ) : null}
 
-      <div className={styles.list} role="list" aria-label="Tasks to place">
-        {inbox.length === 0 ? <p className={styles.empty}>Nothing waiting. Add a thought above.</p> : null}
-        {inbox.map((task) => (
-          <div key={task.id} className={styles.item} role="listitem">
-            <button
-              type="button"
-              className={styles.chip}
-              onPointerDown={(event) => startPress(event, task)}
-              onClick={() => openTask(task)}
-            >
-              <span className={styles.chipTitle}>{task.title}</span>
-              {task.carriedFrom ? <span className={styles.badge}>Carried over</span> : null}
-            </button>
-            <button
-              type="button"
-              className={styles.place}
-              onClick={() => onPlaceTask(task)}
-              aria-label={`Place ${task.title}`}
-            >
-              Place
-            </button>
-          </div>
-        ))}
-      </div>
+      {inbox.length === 0 ? (
+        <p className={styles.empty}>Nothing waiting. Add a thought above.</p>
+      ) : (
+        <div className={styles.list} role="list" aria-label="Tasks to place">
+          {inbox.map((task) => (
+            <div key={task.id} className={styles.item} role="listitem">
+              <button
+                type="button"
+                className={styles.chip}
+                onPointerDown={(event) => startPress(event, task)}
+                onClick={() => openTask(task)}
+              >
+                <span className={styles.chipTitle}>{task.title}</span>
+                {task.carriedFrom ? (
+                  <span className={styles.badge}>
+                    <Icon name="carried" size={12} />
+                    Carried over
+                  </span>
+                ) : null}
+              </button>
+              <button
+                type="button"
+                className={styles.place}
+                onClick={() => onPlaceTask(task)}
+                aria-label={`Place ${task.title}`}
+              >
+                Place
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {expanded ? (
         <div className={styles.routines} aria-label="Routines">

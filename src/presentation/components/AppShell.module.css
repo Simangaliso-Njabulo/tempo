@@ -1,9 +1,31 @@
 .shell {
+  position: relative;
   height: 100vh;
   height: 100dvh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--tempo-color-bg);
+}
+
+.skip {
+  position: absolute;
+  left: var(--tempo-space-4);
+  top: calc(env(safe-area-inset-top) + var(--tempo-space-2));
+  z-index: var(--tempo-z-toast);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tempo-hit-target);
+  padding: 0 var(--tempo-space-4);
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-accent-fill);
+  color: #fff;
+  font-weight: var(--tempo-font-weight-semibold);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip:focus-visible {
+  transform: translateY(0);
 }
 
 .header {

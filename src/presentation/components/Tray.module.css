@@ -98,7 +98,9 @@
 }
 
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   color: var(--tempo-color-carry);
   font-size: var(--tempo-font-size-caption);
 }

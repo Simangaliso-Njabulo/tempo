@@ -24,7 +24,7 @@
   border: 1px solid var(--tempo-color-line);
   border-radius: var(--tempo-radius-md);
   background: var(--tempo-color-surface-2);
-  padding: 8px 10px;
+  padding: 6px 10px;
   overflow: hidden;
   user-select: none;
 }
@@ -56,9 +56,27 @@
 .title {
   display: block;
   font-weight: var(--tempo-font-weight-semibold);
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.type {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 1px;
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-micro);
+  line-height: 12px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .meta {
@@ -67,6 +85,48 @@
   font-size: var(--tempo-font-size-caption);
   overflow: hidden;
   white-space: nowrap;
+}
+
+.badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  color: var(--tempo-color-carry);
+  font-size: var(--tempo-font-size-micro);
+  line-height: 12px;
+}
+
+.compact {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.compactLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--tempo-font-size-micro);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.compactKind {
+  flex: none;
+  color: var(--tempo-color-text-secondary);
+}
+
+.compactTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: var(--tempo-font-weight-medium);
+}
+
+.compact .handle {
+  display: none;
 }
 
 .handle {

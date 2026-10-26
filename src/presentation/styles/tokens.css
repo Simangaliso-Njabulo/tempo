@@ -48,7 +48,9 @@
   --tempo-font-size-display: 2rem;
   --tempo-font-size-title: 1.5rem;
   --tempo-font-size-body: 1rem;
+  --tempo-font-size-callout: 1rem;
   --tempo-font-size-caption: 0.8125rem;
+  --tempo-font-size-micro: 0.6875rem;
   --tempo-font-weight-regular: 400;
   --tempo-font-weight-medium: 500;
   --tempo-font-weight-semibold: 600;

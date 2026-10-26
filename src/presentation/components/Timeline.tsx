@@ -14,9 +14,12 @@ import { HourGrid } from './HourGrid';
 import { NowLine } from './NowLine';
 import styles from './Timeline.module.css';
 
+const EMPTY_IDS: ReadonlySet<string> = new Set();
+
 export function Timeline({
   viewportRef,
   blocks,
+  carriedTaskIds = EMPTY_IDS,
   nowMin,
   timeFormat,
   dragBlockId,
@@ -27,6 +30,7 @@ export function Timeline({
 }: {
   viewportRef?: RefObject<HTMLDivElement | null>;
   blocks: Block[];
+  carriedTaskIds?: ReadonlySet<string>;
   nowMin: number;
   timeFormat: TimeFormat;
   dragBlockId?: string;
@@ -53,7 +57,14 @@ export function Timeline({
   }, []);
 
   return (
-    <div ref={assignViewport} className={styles.viewport}>
+    <div
+      id="timeline"
+      ref={assignViewport}
+      className={styles.viewport}
+      role="region"
+      aria-label="Day timeline"
+      tabIndex={-1}
+    >
       <div className={styles.canvas}>
         <HourGrid />
         <NowLine nowMin={nowMin} />
@@ -64,6 +75,7 @@ export function Timeline({
             lane={lanes.get(block.id) ?? 0}
             timeFormat={timeFormat}
             dragging={dragBlockId === block.id}
+            carried={block.taskId ? carriedTaskIds.has(block.taskId) : false}
             onOpen={onOpen}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}

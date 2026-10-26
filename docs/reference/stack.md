@@ -66,6 +66,8 @@ Dates are local `YYYY-MM-DD` keys. Times are minute-of-day integers. Display for
 
 ## Testing
 
+- `@axe-core/playwright` is a dev dependency. It is the Playwright adapter around the existing `axe-core` engine, so the a11y journey can scan the real page without a second ruleset. The Playwright config itself lands in Task 5.5.
+
 | Level | Scope |
 |---|---|
 | Domain unit | Reflow, anchor protection, carry-over, midnight, DST, overlap detection, undo grouping. Target ≥95%. |

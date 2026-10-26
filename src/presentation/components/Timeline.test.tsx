@@ -40,7 +40,7 @@ it('renders a block at its true position with a readable label', () => {
     />,
   );
 
-  const button = screen.getByRole('button', { name: 'Draft, 09:00, 45 min' });
+  const button = screen.getByRole('button', { name: 'Task Draft 09:00 · 45 min' });
   expect(button).toBeInTheDocument();
   expect(button.style.top).toBe('792px');
   expect(button.style.height).toBe('64px');
@@ -81,9 +81,10 @@ it('keeps a 22 px body and a 44 pt hit area for a compact block', () => {
     />,
   );
 
-  const button = screen.getByRole('button', { name: 'Quick, 09:00, 15 min' });
+  const button = screen.getByRole('button', { name: 'Task Quick 09:00 · 15 min' });
   expect(button.style.height).toBe('44px');
   expect(button.style.top).toBe('781px');
+  expect(screen.getByText('Task')).toBeInTheDocument();
 
   const body = button.firstElementChild as HTMLElement;
   expect(body.style.height).toBe('22px');
@@ -106,8 +107,8 @@ it('moves a colliding compact block to a side lane with a leader line', () => {
     />,
   );
 
-  const first = screen.getByRole('button', { name: 'First, 09:00, 15 min' });
-  const second = screen.getByRole('button', { name: 'Second, 09:15, 15 min' });
+  const first = screen.getByRole('button', { name: 'Task First 09:00 · 15 min' });
+  const second = screen.getByRole('button', { name: 'Task Second 09:15 · 15 min' });
   expect(first.style.left).toBe('64px');
   expect(second.style.left).toBe('116px');
 
@@ -116,4 +117,42 @@ it('moves a colliding compact block to a side lane with a leader line', () => {
   expect((leader as HTMLElement).style.width).toBe('52px');
   expect((leader as HTMLElement).style.left).toBe('-52px');
   expect((leader as HTMLElement).style.top).toBe('11px');
+});
+
+it('names the type and carried state instead of relying on colour', () => {
+  render(
+    <Timeline
+      blocks={[blockInput({ taskId: 't1' })]}
+      carriedTaskIds={new Set(['t1'])}
+      nowMin={600}
+      timeFormat="24h"
+      onOpen={noop}
+      onPointerDown={noop}
+      onPointerMove={noop}
+      onPointerUp={noop}
+    />,
+  );
+
+  expect(
+    screen.getByRole('button', { name: 'Task Draft 09:00 · 45 min carried over' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Carried over')).toBeInTheDocument();
+});
+
+it('hides the decorative icons from assistive technology', () => {
+  const { container } = render(
+    <Timeline
+      blocks={[blockInput()]}
+      nowMin={600}
+      timeFormat="24h"
+      onOpen={noop}
+      onPointerDown={noop}
+      onPointerMove={noop}
+      onPointerUp={noop}
+    />,
+  );
+
+  for (const icon of container.querySelectorAll('svg')) {
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+  }
 });

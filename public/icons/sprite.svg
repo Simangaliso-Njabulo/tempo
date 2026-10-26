@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-task" viewBox="0 0 24 24">
+    <path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </symbol>
+  <symbol id="icon-focus" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+  </symbol>
+  <symbol id="icon-routine" viewBox="0 0 24 24">
+    <path d="M6 8a6 6 0 0 1 10.5-2M18 16a6 6 0 0 1-10.5 2M17 4v4h-4M7 20v-4h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </symbol>
+  <symbol id="icon-break" viewBox="0 0 24 24">
+    <path d="M8 5h8v5a4 4 0 0 1-8 0V5ZM12 17v3M9 20h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </symbol>
+  <symbol id="icon-carried" viewBox="0 0 24 24">
+    <path d="M5 12h12M13 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </symbol>
+  <symbol id="icon-anchor" viewBox="0 0 24 24">
+    <circle cx="12" cy="6" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <path d="M12 8.5V19M7 19h10M5 13a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </symbol>
+  <symbol id="icon-warning" viewBox="0 0 24 24">
+    <path d="M12 4 21 20H3L12 4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+    <path d="M12 10v4M12 17h.01" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </symbol>
+  <symbol id="icon-storage" viewBox="0 0 24 24">
+    <rect x="5" y="5" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <path d="M9 12h6M12 9v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </symbol>
+  <symbol id="icon-share" viewBox="0 0 24 24">
+    <path d="M12 15V4M8 8l4-4 4 4M5 14v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </symbol>
+</svg>

@@ -45,11 +45,19 @@ it('adds a brain-dump task and shows carried-over work', async () => {
   const onAddTask = vi.fn().mockResolvedValue(undefined);
   render(<Tray {...props({ onAddTask })} />);
 
+  expect(screen.getByRole('list', { name: 'Tasks to place' })).toBeInTheDocument();
   expect(screen.getByText('Carried over')).toBeInTheDocument();
   await userEvent.type(screen.getByLabelText('Brain dump'), 'New task');
   await userEvent.click(screen.getByRole('button', { name: 'Add' }));
   expect(onAddTask).toHaveBeenCalledWith('New task');
   expect(screen.getByLabelText('Brain dump')).toHaveValue('');
+});
+
+it('keeps the empty message out of the list role', () => {
+  render(<Tray {...props({ tasks: [] })} />);
+
+  expect(screen.getByText('Nothing waiting. Add a thought above.')).toBeInTheDocument();
+  expect(screen.queryByRole('list', { name: 'Tasks to place' })).not.toBeInTheDocument();
 });
 
 it('shows a plain error and keeps the title when adding fails', async () => {

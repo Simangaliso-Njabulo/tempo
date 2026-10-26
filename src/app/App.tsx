@@ -90,6 +90,13 @@ function Screen() {
   const minStartMin = date === today ? nowMin : 0;
   const canCloseDay = date === today && nowMin >= DAY_CLOSE_HOUR * 60;
   const blocks = plan?.blocks ?? [];
+  const carriedTaskIds = useMemo(
+    () =>
+      new Set(
+        (plan?.tasks ?? []).filter((task) => task.carriedFrom).map((task) => task.id),
+      ),
+    [plan?.tasks],
+  );
   const selectedBlock = blocks.find((block) => block.id === selectedBlockId) ?? null;
   const blockTask = selectedBlock?.taskId
     ? (plan?.tasks.find((task) => task.id === selectedBlock.taskId) ?? null)
@@ -462,6 +469,7 @@ function Screen() {
         <Timeline
           viewportRef={timelineRef}
           blocks={blocks}
+          carriedTaskIds={carriedTaskIds}
           nowMin={date === today ? nowMin : 0}
           timeFormat={timeFormat}
           dragBlockId={drag.drag?.blockId}
