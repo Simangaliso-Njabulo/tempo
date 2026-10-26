@@ -2,7 +2,7 @@
 
 TEMPO is a calm, offline-first daily planner for iPhone. Brain-dump first, then drag tasks onto a vertical timeline. Plan the day in under 60 seconds — and let the plan survive slippage.
 
-**Status:** design and spec approved 2026-10-25. No app code yet. The app and operations plans are complete and awaiting approval; implementation starts only after both are approved.
+**Status:** design, spec, and implementation plans approved 2026-10-25. The app scaffold (Task 0.1) is committed; lint and test setup (Task 0.2) is in progress. The security program is written and enforced through the operations plan. No remote, CI, or release exists yet.
 
 ## Source of truth
 
@@ -12,7 +12,8 @@ Read in this order:
 2. **Design contract** — `docs/design/feel-contract.md`
 3. **Decision log** — `docs/design/decisions.md`
 4. **Reference library** — `docs/reference/README.md`
-5. **Implementation plans** — `docs/superpowers/plans/` (complete, awaiting approval)
+5. **Security program** — `docs/security/README.md`
+6. **Implementation plans** — `docs/superpowers/plans/` (approved 2026-10-25)
 
 If a change conflicts with a higher layer, stop and record a decision instead of silently diverging from the agreed direction.
 
@@ -28,6 +29,18 @@ If a change conflicts with a higher layer, stop and record a decision instead of
 The canonical index is [docs/reference/README.md](docs/reference/README.md). It keeps the Apple Human Interface Guidelines, PWA and Safari documentation, UI/UX and accessibility sources, AI-development and automation docs, and stack documentation in one place.
 
 The short rule: **build from the references, cite them in the change, and update the decision log when the references and the product disagree.**
+
+## Security
+
+TEMPO has no backend, accounts, sync, or analytics, so there is no server to breach and no secret in the app. The remaining risk is the browser, the supply chain, imports, exports, and the autonomous loop. The program is fail-closed:
+
+- [Security program](docs/security/README.md) — severity, controls, verification, response, and privacy.
+- [Threat model](docs/security/threat-model.md) and [agent threat model](docs/security/agent-threat-model.md) — assets, trust boundaries, and threats.
+- [Controls](docs/security/controls.md) — `SEC-01` to `SEC-28`, each with a verification path.
+- [Verification](docs/security/verification.md) — the fourteen required checks and the abuse tests.
+- [Public reporting policy](SECURITY.md) — how to report a vulnerability.
+
+Decisions D-032 to D-035 in the [decision log](docs/design/decisions.md) record the security stack, the fail-closed enforcement model, and the encrypted-backup scope. The checks are specified and become active only when the operations plan creates them; nothing here claims a gate that does not run.
 
 ## Current direction
 
@@ -49,11 +62,23 @@ The short rule: **build from the references, cite them in the change, and update
 ```text
 .
 ├─ AGENTS.md                     # rules for every AI agent and contributor
+├─ SECURITY.md                   # vulnerability-reporting policy
 ├─ docs/
 │  ├─ design/                    # feel contract, visual board, decision log
 │  ├─ reference/                 # living reference library and local snapshots
 │  │  └─ apple-hig/              # downloaded Apple HIG pages
-│  └─ superpowers/               # approved spec and implementation plan
+│  ├─ security/                  # threat models, controls, verification, waivers, attestations
+│  └─ superpowers/               # approved spec and implementation plans
+├─ public/                       # icons, manifest, boot CSS, theme bootstrap
+├─ src/
+│  ├─ domain/                    # pure types and rules
+│  ├─ application/               # use cases and ports
+│  ├─ infrastructure/            # Dexie, time, export, platform
+│  ├─ presentation/               # React components, hooks, styles
+│  └─ app/                       # composition root
+├─ security/                     # machine-readable policy, waivers, attestations
+├─ scripts/                      # security and operations tooling
+├─ tests/                        # Playwright journeys and axe checks
 ├─ README.md
 └─ .gitignore
 ```
@@ -64,10 +89,11 @@ Open `docs/design/feel-board.html` directly in a browser. It loads Geist from Go
 
 ## Next
 
-1. Review and approve the implementation plan in `docs/superpowers/plans/`.
-2. Build the app from the approved spec and plan.
-3. Run the quality gates and the low-risk improvement loop.
+1. Finish Task 0.2: lint, boundaries, formatting, and unit-test setup.
+2. Build the domain, infrastructure, application, and presentation layers from the app plan.
+3. Run the operations plan: CI, security checks, branch protection, Pages, and the local loop.
+4. Choose a license and repository visibility before the first public release (D-031).
 
 ## License
 
-To be selected before the first public release. TEMPO is intended to be open source and zero-cost to run.
+Not yet chosen (D-031). TEMPO is intended to be open source and zero-cost to run. The repository stays private until the maintainer records the license and visibility decision.

@@ -15,6 +15,7 @@ When sources disagree, use this order:
 5. **Product and craft guidance**: NN/g, Laws of UX, Refactoring UI, web.dev.
 6. **Stack documentation**: React, Vite, TypeScript, Dexie, testing tools.
 7. **AI-development and automation guidance**: OpenCode, GitHub Actions, OWASP, NIST.
+8. **Security standards and controls**: SSDF, ASVS, OWASP Top 10, SLSA, OpenSSF, and the local control map.
 
 Do not silently choose a lower layer over a higher one. If a platform limitation makes a design rule impossible, record the limitation and the trade-off in the decision log.
 
@@ -28,6 +29,7 @@ Do not silently choose a lower layer over a higher one. If a platform limitation
 | iOS, Safari, install, offline, storage | [PWA and iOS notes](pwa.md) |
 | Interaction, accessibility, visual craft | [UI/UX and accessibility notes](ui-ux.md) |
 | AI loop, risk, automation, evaluation | [AI development notes](ai-development.md) |
+| Security standards, threat model, controls, waivers | [Security reference](security.md) |
 | Framework, data, testing, bundle budget | [Stack notes](stack.md) |
 | Apple HIG local snapshots | [Apple HIG index](apple-hig/README.md) |
 
@@ -78,6 +80,22 @@ Do not silently choose a lower layer over a higher one. If a platform limitation
 - [Model Context Protocol](https://modelcontextprotocol.io/).
 - [Google PAIR — People + AI Guidebook](https://pair.withgoogle.com/guidebook/).
 
+### Security
+
+- [Security reference](security.md) — adopted standards, tooling, the Wiz decision, and the citation rule.
+- [Security program](../security/README.md) — ways of working, severity, and self-correction.
+- [Threat model](../security/threat-model.md) — assets, trust boundaries, threats, and residual risk.
+- [Agent threat model](../security/agent-threat-model.md) — ASI01-ASI10 mapped to the loop.
+- [Controls](../security/controls.md) — the control catalogue and evidence.
+- [Verification](../security/verification.md) — required checks and commands.
+- [Privacy and data protection](../security/privacy.md) — local data, encrypted export, logging.
+- [Incident response](../security/incident-response.md) — containment and recovery.
+- [NIST SP 800-218 SSDF 1.1](https://csrc.nist.gov/pubs/sp/800/218/final), [OWASP ASVS 5.0](https://owasp.org/www-project-application-security-verification-standard/), [OWASP Top 10:2025](https://owasp.org/Top10/2025/), [OWASP Agentic Top 10 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/).
+- [SLSA 1.2](https://slsa.dev/spec/v1.2/), [OpenSSF Scorecard](https://github.com/ossf/scorecard), [OpenSSF Best Practices Badge](https://www.bestpractices.dev/).
+- [GitHub CodeQL](https://codeql.github.com/docs/), [secret scanning](https://docs.github.com/en/code-security/secret-scanning), [dependency review](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review), [Actions hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions).
+- [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP), [MDN Web Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API), [RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545).
+- [Wiz](https://www.wiz.io/) — optional manual reading only; not a required dependency (D-033).
+
 ### Stack
 
 - [React 19](https://react.dev/), [Vite](https://vite.dev/guide/), [TypeScript](https://www.typescriptlang.org/docs/).
@@ -99,9 +117,10 @@ The Apple HIG pages in [`apple-hig/`](apple-hig/) are local Markdown snapshots f
 
 ## Freshness and review
 
-- Review this library before a design freeze, before starting implementation of a new area, and before merging any change to the AI loop.
+- Review this library before a design freeze, before starting implementation of a new area, and before merging any change to the AI loop or the security controls.
 - Refresh the HIG snapshots when iOS ships a new major version or when a platform behavior is in doubt.
 - Re-check the PWA notes whenever Safari ships a major release.
+- Re-check the security standards and the threat model at each major release, quarterly, and after any incident.
 - Do not add a source you have not read. A link with no note is not a reference.
 
 ## Citation format

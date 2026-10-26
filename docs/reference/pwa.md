@@ -17,6 +17,8 @@ TEMPO is an installable web app used from the iPhone Home Screen. The platform i
 | Web Push on iOS | [WebKit — Web Push for web apps on iOS and iPadOS](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/) |
 | Safari release notes | [Apple — Safari release notes](https://developer.apple.com/documentation/safari-release-notes) |
 | Calendar export | [RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545) |
+| Content Security Policy | [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP), [web.dev CSP](https://web.dev/articles/csp) |
+| Local encryption | [MDN Web Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) |
 
 ## Platform constraints
 
@@ -40,7 +42,7 @@ TEMPO is an installable web app used from the iPhone Home Screen. The platform i
 - App-shell grid: header / internal timeline scroll / tray. No fixed or sticky chrome.
 - Safe areas: `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`.
 - Opaque top band matching the theme; `theme-color` light and dark variants.
-- Inline critical CSS in `index.html` for the background and wordmark, so there is no white flash before hydration.
+- Inline critical CSS in `index.html` for the background and wordmark, so there is no white flash before hydration. **Production exception:** use a small self-hosted `public/boot.css` linked before the module instead of an inline `<style>`, so the CSP can stay `style-src 'self'` with no `unsafe-inline`. The dev server may inline for speed; the production artifact must not.
 - Manifest:
   - `name`, `short_name`, `start_url`, `scope`
   - `display: "standalone"`, `display_override: ["standalone", "minimal-ui"]`
@@ -64,10 +66,25 @@ TEMPO is an installable web app used from the iPhone Home Screen. The platform i
 
 - IndexedDB is the source of truth. Dexie is the access layer.
 - Request persistent storage after the first real plan.
-- Provide a human-readable JSON backup and restore.
+- Provide a human-readable JSON backup and restore, plus an optional passphrase-encrypted backup.
+- The plaintext export is clearly labelled "Not encrypted."
+- The encrypted export uses PBKDF2-HMAC-SHA-256 (600,000 iterations) and AES-256-GCM via Web Crypto. The passphrase is never stored or logged. There is no recovery if it is forgotten.
+- Live IndexedDB data is protected by the iOS app sandbox and device passcode. TEMPO does not add a passphrase to live data in v1 (D-035).
 - Treat storage denial and quota pressure as normal states, not rare errors.
 - Never put personal plan data in a URL, log, analytics event, or remote request.
 - Home Screen and Safari are separate storage contexts; document that clearly in export/restore.
+- Validate every imported file before a write. A failed import leaves the previous data intact.
+- Clearing site data or deleting the app deletes the local plan. Warn before the destructive action.
+
+## Content Security Policy and headers
+
+- GitHub Pages cannot set custom response headers. Use a `<meta http-equiv="Content-Security-Policy">` in `index.html`.
+- Production policy: `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'`.
+- No inline script. No inline `style` attribute. No `unsafe-inline` or `unsafe-eval`.
+- No third-party script, style, font, image, or connect origin.
+- `frame-ancestors` is ignored in a meta CSP. The app cannot prevent framing via GitHub Pages; record this as residual risk. There are no authenticated server actions, which limits the impact.
+- The service worker precaches same-origin app-shell assets only. Do not runtime-cache third-party origins.
+- Verify the built `dist/index.html`, not the dev server.
 
 ## Reminders and calendar export
 
@@ -90,6 +107,10 @@ TEMPO is an installable web app used from the iPhone Home Screen. The platform i
 - Low Power Mode.
 - Airplane mode.
 - Storage pressure / persistence denied.
+- Wrong passphrase and tampered encrypted backup.
+- Malicious JSON import (oversized, unknown fields, prototype-pollution key).
+- `.ics` import with CRLF/commas/semicolons in the title.
+- CSP: no third-party request, no inline script, no console CSP violation.
 - Midnight rollover and DST transition.
 
 ## Open verification items
@@ -100,3 +121,7 @@ TEMPO is an installable web app used from the iPhone Home Screen. The platform i
 - [ ] Confirm service-worker pause/restart behavior after several days.
 - [ ] Confirm `.ics` import and alarm behavior in Apple Calendar.
 - [ ] Confirm the app launches offline after a cold device restart.
+- [ ] Confirm the production CSP has no violations and no third-party origin.
+- [ ] Confirm the external boot stylesheet prevents a white flash without `unsafe-inline`.
+- [ ] Confirm encrypted export and restore on a real iPhone, including a wrong passphrase.
+- [ ] Confirm that a failed replace import leaves the existing plan intact.
