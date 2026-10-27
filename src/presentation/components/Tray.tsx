@@ -144,7 +144,7 @@ export function Tray({
   return (
     <section
       id="tray-panel"
-      className={`${styles.tray} ${expanded ? styles.expanded : styles.collapsed}`}
+      className={`${styles.tray} ${expanded ? styles.expanded : styles.collapsed} ${installPrompt ? styles.withHint : ''}`}
       aria-label="Task tray"
       ref={rootRef}
     >

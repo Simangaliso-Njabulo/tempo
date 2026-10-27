@@ -16,6 +16,9 @@
 - Dependabot: npm daily, GitHub Actions weekly, grouped, always `risk:high`
 - Secret scanning: enabled, with push protection
 - Private vulnerability reporting: enabled
+- Dependabot alerts and security updates: enabled
+- Default workflow token: read-only; pull-request approval is not granted
+- Actions: restricted to selected creators (GitHub-owned, `gitleaks/gitleaks-action@*`, `ossf/scorecard-action@*`), full SHA pinning required
 - CodeQL: JavaScript/TypeScript, `security-extended`
 - Loop token: fine-grained, least privilege, stored in the loop user's environment
 

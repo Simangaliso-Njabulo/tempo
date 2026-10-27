@@ -87,7 +87,7 @@ Both run against `vite preview` on port 4173 with the production build. The suit
 
 | File | Proves |
 |---|---|
-| `first-run.spec.ts` | Brain dump, drag to the timeline, undo, and the non-drag **Place** path |
+| `first-run.spec.ts` | Brain dump, drag to the timeline, undo, the non-drag **Place** path, and the install hint as a footer that never covers the composer |
 | `reflow-undo.spec.ts` | Overrun previews, applies, and undoes; a completed overrun does not ask |
 | `carry-over.spec.ts` | Unfinished work returns at midnight with **Carried over**; finished work does not |
 | `backup.spec.ts` | Export, reset, and import restores the local day |
@@ -95,8 +95,8 @@ Both run against `vite preview` on port 4173 with the production build. The suit
 | `security.spec.ts` | Strict CSP, no third-party request, task text rendered as text |
 | `performance.spec.ts` | Drag stays inside the long-frame and DOM budgets, including reduced motion |
 | `toast.spec.ts` | The undo toast sits above the tray and never covers its controls |
-| `a11y.spec.ts` | axe has zero serious or critical issues (`@a11y`) |
-| `visual.spec.ts` | Dark and light screenshots match their baselines |
+| `a11y.spec.ts` | axe has zero serious or critical issues (`@a11y`); every visible target is at least 44 by 44 |
+| `visual.spec.ts` | Dark and light screenshots match their baselines, phone and desktop |
 
 Helpers live in `tests/e2e/helpers.ts`. They seed a fixed date, place blocks through the real UI, and freeze the clock.
 
