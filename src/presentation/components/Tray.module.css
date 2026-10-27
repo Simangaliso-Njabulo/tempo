@@ -105,6 +105,13 @@
   font-size: var(--tempo-font-size-caption);
 }
 
+.meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--tempo-color-text-tertiary);
+  font-size: var(--tempo-font-size-caption);
+}
+
 .place,
 .skip {
   min-height: var(--tempo-hit-target);

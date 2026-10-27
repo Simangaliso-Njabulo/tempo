@@ -94,6 +94,7 @@ Both run against `vite preview` on port 4173 with the production build. The suit
 | `offline.spec.ts` | The cached shell reloads with the network disabled |
 | `security.spec.ts` | Strict CSP, no third-party request, task text rendered as text |
 | `performance.spec.ts` | Drag stays inside the long-frame and DOM budgets, including reduced motion |
+| `toast.spec.ts` | The undo toast sits above the tray and never covers its controls |
 | `a11y.spec.ts` | axe has zero serious or critical issues (`@a11y`) |
 | `visual.spec.ts` | Dark and light screenshots match their baselines |
 

@@ -74,6 +74,14 @@
   gap: var(--tempo-space-2);
 }
 
+/* The duration chooser is a fieldset for the legend; strip the default frame. */
+fieldset.section {
+  min-inline-size: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
 .sectionTitle {
   margin: 0;
   font-size: var(--tempo-font-size-body);

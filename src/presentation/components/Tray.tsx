@@ -56,6 +56,30 @@ export function Tray({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const press = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
+
+  /*
+   * The toast is fixed to the viewport, so it needs to know how tall the tray
+   * is to stay above it. The tray grows and shrinks (collapse, task list,
+   * install hint), so this is measured rather than guessed.
+   */
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    const publish = () => {
+      document.documentElement.style.setProperty(
+        '--tempo-tray-height',
+        `${Math.round(node.getBoundingClientRect().height)}px`,
+      );
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--tempo-tray-height');
+    };
+  }, []);
 
   const inbox = tasks.filter((task) => task.status === 'inbox');
   const due = useMemo(
@@ -122,6 +146,7 @@ export function Tray({
       id="tray-panel"
       className={`${styles.tray} ${expanded ? styles.expanded : styles.collapsed}`}
       aria-label="Task tray"
+      ref={rootRef}
     >
       <div className={styles.topRow}>
         <button
