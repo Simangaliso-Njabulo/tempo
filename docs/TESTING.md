@@ -121,6 +121,8 @@ The manual checks that automation cannot cover:
 
 Baselines are platform-specific. Windows screenshots must not be committed; they will not match Linux rendering.
 
+Twenty baselines, all WebKit: empty and planned days at 375, 393, and 440 px in both themes, the add sheet, the reflow preview, the carried tray, and a 1280 px desktop day in both themes (the side-column layout from the feel contract). `visual.spec.ts` skips the Chromium project because the baseline set is deliberately one engine, so `npm run test:visual` behaves the same locally as in CI.
+
 - Update baselines only through the **Visual baselines** workflow (`.github/workflows/visual-baselines.yml`), which runs on `ubuntu-latest`, or on a Linux host with the same Playwright Docker image.
 - Locally on Windows, run `npm run test:visual` to see the diff and the report, and read the failure as "my change moved a pixel", not as "the baseline is wrong".
 - A visual change needs a screenshot in the pull request.
