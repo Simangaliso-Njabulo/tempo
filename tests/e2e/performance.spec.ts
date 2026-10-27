@@ -82,43 +82,51 @@ async function dragDownOneHour(page: Page) {
   await page.mouse.up();
 }
 
-test('drag stays under the long-frame and DOM budgets', async ({ page }) => {
-  // Pin the app's clock so 09:00 is still in the future. `setFixedTime` fixes
-  // `Date` without freezing timers or animation frames, so the recorder and
-  // the rAF-bound drag still tick.
-  await page.clock.setFixedTime(new Date('2026-10-25T08:55:00'));
-  await page.goto('/');
-  await addFocusBlock(page);
+/*
+ * The 50 ms budget is about the app, not about the machine, so these run on a
+ * single worker (`npm run test:perf`) instead of alongside the rest of the
+ * suite. Two browsers competing for two cores produced a 61 ms frame that
+ * said nothing about the drag code. The budget itself is unchanged.
+ */
+test.describe('performance @performance', () => {
+  test('drag stays under the long-frame and DOM budgets', async ({ page }) => {
+    // Pin the app's clock so 09:00 is still in the future. `setFixedTime` fixes
+    // `Date` without freezing timers or animation frames, so the recorder and
+    // the rAF-bound drag still tick.
+    await page.clock.setFixedTime(new Date('2026-10-25T08:55:00'));
+    await page.goto('/');
+    await addFocusBlock(page);
 
-  await startFrameRecorder(page);
-  await dragDownOneHour(page);
+    await startFrameRecorder(page);
+    await dragDownOneHour(page);
 
-  await page.waitForTimeout(100);
-  const result = await stopFrameRecorder(page);
+    await page.waitForTimeout(100);
+    const result = await stopFrameRecorder(page);
 
-  expect(result.frames.filter((duration) => duration > 50)).toEqual([]);
-  expect(result.nodes).toBeLessThanOrEqual(1500);
+    expect(result.frames.filter((duration) => duration > 50)).toEqual([]);
+    expect(result.nodes).toBeLessThanOrEqual(1500);
 
-  // The drop is a real action: it moves the block and offers one undo.
-  await expect(page.getByRole('button', { name: /Performance check/ })).toHaveAccessibleName(
-    /10:00/,
-  );
-});
+    // The drop is a real action: it moves the block and offers one undo.
+    await expect(page.getByRole('button', { name: /Performance check/ })).toHaveAccessibleName(
+      /10:00/,
+    );
+  });
 
-test('reduced motion still commits a drag within the same budgets', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.clock.setFixedTime(new Date('2026-10-25T08:55:00'));
-  await page.goto('/');
-  await addFocusBlock(page);
+  test('reduced motion still commits a drag within the same budgets', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.clock.setFixedTime(new Date('2026-10-25T08:55:00'));
+    await page.goto('/');
+    await addFocusBlock(page);
 
-  await startFrameRecorder(page);
-  await dragDownOneHour(page);
+    await startFrameRecorder(page);
+    await dragDownOneHour(page);
 
-  await page.waitForTimeout(100);
-  const result = await stopFrameRecorder(page);
+    await page.waitForTimeout(100);
+    const result = await stopFrameRecorder(page);
 
-  expect(result.frames.filter((duration) => duration > 50)).toEqual([]);
-  await expect(page.getByRole('button', { name: /Performance check/ })).toHaveAccessibleName(
-    /10:00/,
-  );
+    expect(result.frames.filter((duration) => duration > 50)).toEqual([]);
+    await expect(page.getByRole('button', { name: /Performance check/ })).toHaveAccessibleName(
+      /10:00/,
+    );
+  });
 });

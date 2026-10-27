@@ -13,8 +13,8 @@
     "test:watch": "vitest",
     "test:domain": "vitest run --config vitest.domain.config.ts",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test --grep-invert @visual",
-    "test:e2e:webkit": "playwright test --project=webkit-iphone --grep-invert @visual",
+    "test:e2e": "playwright test --grep-invert \"@visual|@performance\"",
+    "test:e2e:webkit": "playwright test --project=webkit-iphone --grep-invert \"@visual|@performance\"",
     "test:a11y": "playwright test --grep @a11y",
     "test:visual": "playwright test tests/e2e/visual.spec.ts",
     "check:pwa": "node scripts/check-pwa.mjs",
@@ -28,8 +28,9 @@
     "security:secrets": "gitleaks detect --source . --redact --no-banner",
     "verify:security": "npm run security:policy && npm run security:deps && npm run security:workflows && npm run security:secrets",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run size && npm run check:pwa",
-    "verify:full": "npm run verify && npm run test:coverage && npm run test:e2e && npm run lighthouse",
-    "format": "prettier --write ."
+    "verify:full": "npm run verify && npm run test:coverage && npm run test:e2e && npm run test:perf && npm run lighthouse",
+    "format": "prettier --write .",
+    "test:perf": "playwright test --grep @performance --workers=1"
   },
   "dependencies": {
     "dexie": "^4.4.7",

@@ -139,6 +139,43 @@ it('names the type and carried state instead of relying on colour', () => {
   expect(screen.getByText('Carried over')).toBeInTheDocument();
 });
 
+it('says a break once when its title is the default', () => {
+  render(
+    <Timeline
+      blocks={[blockInput({ kind: 'break', title: 'Break', anchor: true, durationMin: 60 })]}
+      nowMin={600}
+      timeFormat="24h"
+      onOpen={noop}
+      onPointerDown={noop}
+      onPointerMove={noop}
+      onPointerUp={noop}
+    />,
+  );
+
+  // "Break Break 09:00 · 1h" was both ugly and doubled in the accessible name.
+  expect(screen.getByRole('button', { name: 'Break 09:00 · 1h anchored' })).toBeInTheDocument();
+  expect(screen.getAllByText('Break')).toHaveLength(1);
+});
+
+it('keeps a custom break title', () => {
+  render(
+    <Timeline
+      blocks={[blockInput({ kind: 'break', title: 'Walk the dog', anchor: true, durationMin: 15 })]}
+      nowMin={600}
+      timeFormat="24h"
+      onOpen={noop}
+      onPointerDown={noop}
+      onPointerMove={noop}
+      onPointerUp={noop}
+    />,
+  );
+
+  expect(
+    screen.getByRole('button', { name: 'Break Walk the dog 09:00 · 15 min anchored' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Walk the dog')).toBeInTheDocument();
+});
+
 it('hides the decorative icons from assistive technology', () => {
   const { container } = render(
     <Timeline

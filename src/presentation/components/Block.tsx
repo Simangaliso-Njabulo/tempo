@@ -53,6 +53,10 @@ export const Block = memo(function Block({
   const bodyRef = useRef<HTMLDivElement>(null);
   const leaderRef = useRef<HTMLSpanElement>(null);
   const compact = blockGeometry(block).height < COMPACT_BODY_MAX;
+  const kindLabel = KIND_LABEL[block.kind];
+  // A break's default title is its kind, so rendering both reads "Break Break"
+  // in the block and in the accessible name. The kind already says it.
+  const showTitle = block.title.trim() !== kindLabel;
 
   // A compact block keeps its true-time 22 px body but a 44 pt hit area. The
   // hit area grows around the body so the visual start stays exact. Blocks
@@ -92,8 +96,8 @@ export const Block = memo(function Block({
   // say what they see. Punctuation is kept out of the prefix for the same
   // reason.
   const label = [
-    KIND_LABEL[block.kind],
-    block.title,
+    kindLabel,
+    showTitle ? block.title : null,
     `${formatTime(block.startMin, timeFormat)} · ${formatDuration(block.durationMin)}`,
     block.status === 'done' ? 'done' : null,
     block.anchor ? 'anchored' : null,
@@ -124,8 +128,8 @@ export const Block = memo(function Block({
         {compact ? (
           <span className={styles.compactLine}>
             <Icon name={block.kind} size={11} />
-            <span className={styles.compactKind}>{KIND_LABEL[block.kind]}</span>{' '}
-            <span className={styles.compactTitle}>{block.title}</span>
+            <span className={styles.compactKind}>{kindLabel}</span>{' '}
+            {showTitle ? <span className={styles.compactTitle}>{block.title}</span> : null}
             {carried ? <Icon name="carried" size={11} title="Carried over" /> : null}
             {block.anchor ? <Icon name="anchor" size={11} title="Anchored" /> : null}
           </span>
@@ -133,10 +137,10 @@ export const Block = memo(function Block({
           <>
             <span className={styles.type}>
               <Icon name={block.kind} size={14} />
-              <span>{KIND_LABEL[block.kind]}</span>
+              <span>{kindLabel}</span>
               {block.anchor ? <Icon name="anchor" size={12} title="Anchored" /> : null}
             </span>{' '}
-            <span className={styles.title}>{block.title}</span>{' '}
+            {showTitle ? <span className={styles.title}>{block.title}</span> : null}{' '}
             <span className={styles.metaRow}>
               <span className={styles.meta}>
                 {formatTime(block.startMin, timeFormat)} · {formatDuration(block.durationMin)}

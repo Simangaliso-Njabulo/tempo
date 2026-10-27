@@ -18,15 +18,18 @@ npm run test              # every Vitest file, no coverage
 npm run test:watch        # watch mode while editing
 npm run test:domain       # domain files only, with the 95% domain threshold
 npm run test:coverage     # every Vitest file with the overall threshold
-npm run test:e2e          # Playwright, both projects
+npm run test:e2e          # Playwright, both projects, minus @visual and @performance
 npm run test:e2e:webkit   # Playwright, iPhone 13 WebKit only (the CI project)
+npm run test:perf         # the 50 ms drag budget, one worker so frames are not starved
 npm run test:a11y         # axe scans, tagged @a11y
 npm run test:visual       # dark and light screenshot regression
 npm run lighthouse        # Lighthouse against the production preview
 npm run verify            # typecheck, lint, unit, build, size, PWA artifacts
 ```
 
-`npm run verify` is the fast, deterministic gate. `npm run verify:full` adds coverage and e2e on the host machine.
+`npm run verify` is the fast, deterministic gate. `npm run verify:full` adds coverage, e2e, the drag budget, and Lighthouse on the host machine.
+
+The drag budget is not part of `test:e2e` on purpose. It measures the app, not the machine: two browsers sharing two CI cores once produced a 61 ms frame in code that had not changed. `npm run test:perf` runs those two tests on a single worker with the same 50 ms limit.
 
 ## Thresholds
 
@@ -93,7 +96,7 @@ Both run against `vite preview` on port 4173 with the production build. The suit
 | `backup.spec.ts` | Export, reset, and import restores the local day |
 | `offline.spec.ts` | The cached shell reloads with the network disabled |
 | `security.spec.ts` | Strict CSP, no third-party request, task text rendered as text |
-| `performance.spec.ts` | Drag stays inside the long-frame and DOM budgets, including reduced motion |
+| `performance.spec.ts` | Drag stays inside the long-frame and DOM budgets, including reduced motion (`@performance`, run by `test:perf` on one worker) |
 | `toast.spec.ts` | The undo toast sits above the tray and never covers its controls |
 | `a11y.spec.ts` | axe has zero serious or critical issues (`@a11y`); every visible target is at least 44 by 44 |
 | `visual.spec.ts` | Dark and light screenshots match their baselines, phone and desktop |
@@ -136,6 +139,8 @@ docker run --rm -v "${PWD}:/work" -w /work mcr.microsoft.com/playwright:v1.64.1-
 ## Lighthouse
 
 `scripts/lighthouse.mjs` starts the production preview, runs Lighthouse with the mobile preset, writes `lighthouse-report.html`, and asserts mobile Performance >= 95, Accessibility 100, and Best Practices 100. SEO is not asserted: TEMPO is an app shell, not a crawlable site.
+
+It runs three times and gates the median of each category. A shared CI runner is occasionally descheduled mid-task: one run reported a 1904 ms long task for a bundle that takes 114 ms of scripting on a quiet machine. The floors are unchanged and every sample is printed, so a real regression still shows up in all three runs. `LIGHTHOUSE_RUNS` must be an odd number, 3 or more.
 
 It uses the pinned `lighthouse` dev dependency rather than `@lhci/cli`, because the LHCI tree carried high advisories that would fail `security-supply-chain` (D-036). Set `CHROME_PATH` when Chrome is not on the default path.
 

@@ -14,7 +14,7 @@
 | `build` | `ci.yml` | Production build and PWA artifacts |
 | `size` | `ci.yml` | JS, CSS, and font budgets |
 | `visual` | `ci.yml` | Dark and light screenshot regression |
-| `lighthouse` | `ci.yml` | Mobile Performance >= 95, Accessibility 100, Best Practices 100 |
+| `lighthouse` | `ci.yml` | Median of three runs: mobile Performance >= 95, Accessibility 100, Best Practices 100 |
 | `security-static` | `security.yml` | CodeQL `security-extended`, no high or critical finding |
 | `security-supply-chain` | `security.yml` | Dependency review, `npm audit`, OSV-Scanner, SBOM |
 | `security-workflows` | `security.yml` | `actionlint`, `zizmor`, full-SHA pins, least privilege |
@@ -33,6 +33,7 @@ typecheck     npm ci && npm run typecheck
 unit          npm ci && npm run test:coverage        (uploads coverage/)
 e2e           npm ci && playwright install --with-deps webkit
               npm run test:e2e -- --project=webkit-iphone
+              npm run test:perf -- --project=webkit-iphone   (single worker)
 a11y          same browser install
               npm run test:a11y -- --project=webkit-iphone
 build         npm ci && npm run build && npm run check:pwa
