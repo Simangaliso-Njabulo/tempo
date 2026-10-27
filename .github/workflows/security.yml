@@ -47,7 +47,6 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -58,13 +57,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm audit --audit-level=high
-      - uses: actions/dependency-review-action@da24556b548a50705dd671f47852072ea4c105d9 # v4.7.1
-        if: github.event_name == 'pull_request'
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: always
-          license-check: true
-          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
+      # `actions/dependency-review-action` needs a GitHub API token and reports
+      # "Dependency review is not supported on this repository" whenever the
+      # installation rate limit is exhausted — a red gate with no finding. The
+      # licence half of that control is now checked from the lockfile, which
+      # needs no API; the vulnerability half is `npm audit` and OSV below, and
+      # Dependabot alerts still cover the diff.
+      - name: Check the production licence allowlist
+        run: npm run security:licenses
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           go-version: '1.24'
@@ -104,10 +104,15 @@ jobs:
           echo "$(python3 -m site --user-base)/bin" >> "$GITHUB_PATH"
       - name: Lint the workflow files
         run: actionlint
+      # `--offline` runs every audit that needs no network. The five online
+      # audits (impostor-commit, ref-confusion, known-vulnerable-actions,
+      # stale-action-refs, ref-version-mismatch) skip themselves here and are
+      # covered instead by Dependabot on the `github-actions` ecosystem, the
+      # full-SHA pins enforced by check-policy.mjs, and the scheduled drift
+      # audit. Giving zizmor GH_TOKEN made the gate depend on the installation
+      # rate limit, which failed it with a 403 and no finding.
       - name: Audit the workflows for known attack patterns
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: zizmor .github/workflows
+        run: zizmor --offline .github/workflows
 
   security-secrets:
     name: security-secrets
@@ -116,11 +121,26 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          # `detect` walks the whole history, so it needs all of it.
           fetch-depth: 0
           persist-credentials: false
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+      # The Gitleaks *action* asks the GitHub API who it is and dies when the
+      # installation rate limit is exhausted, which fails the gate for reasons
+      # unrelated to the diff. The binary scans history locally with no token.
+      - name: Install Gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLo "$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "$archive" gitleaks
+          ./gitleaks version
+      - name: Scan the history for secrets
+        run: ./gitleaks detect --source . --redact --no-banner --exit-code 1
 
   security-policy:
     name: security-policy

@@ -20,9 +20,9 @@ A security claim needs evidence. The evidence is a command and its result, a tes
 | `visual` | Dark and light screenshot regression | `npm run test:visual -- --project=webkit-iphone` | Yes |
 | `lighthouse` | Mobile Performance >=95, Accessibility 100, Best Practices 100 | `npm run lighthouse` | Yes |
 | `security-static` | CodeQL finds no high/critical issue in the changed code | CodeQL workflow, security-extended | Yes |
-| `security-supply-chain` | No high/critical vulnerable dependency; lockfile and SBOM are consistent | dependency review, `npm audit --audit-level=high`, OSV-Scanner, CycloneDX | Yes |
-| `security-workflows` | Workflows parse, are pinned, and have least privilege | `actionlint`, `zizmor` | Yes |
-| `security-secrets` | No secret in the diff or history | Gitleaks + GitHub secret scanning | Yes |
+| `security-supply-chain` | No high/critical vulnerable dependency; every shipped licence is allowed and named in the notices; lockfile and SBOM are consistent | `npm run security:licenses`, `npm audit --audit-level=high`, OSV-Scanner, CycloneDX | Yes |
+| `security-workflows` | Workflows parse, are pinned, and have least privilege | `actionlint`, `zizmor --offline` | Yes |
+| `security-secrets` | No secret in the diff or history | Gitleaks 8.30.1 binary + GitHub secret scanning | Yes |
 | `security-policy` | CSP, protected paths, risk label, waiver expiry, required sections, no third-party runtime origin | `node scripts/security/check-policy.mjs` | Yes |
 
 `main` requires all of these. A red check is not merged. There is no "merge anyway" button for security checks except a recorded incident override by the maintainer, followed by a retrospective.
@@ -65,10 +65,11 @@ Target `package.json` additions:
 {
   "scripts": {
     "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run size && npm run check:pwa && npm run security:policy",
-    "verify:security": "npm run security:policy && npm run security:deps && npm run security:workflows && npm run security:secrets",
+    "verify:security": "npm run security:policy && npm run security:deps && npm run security:licenses && npm run security:workflows && npm run security:secrets",
     "security:policy": "node scripts/security/check-policy.mjs",
     "security:deps": "npm audit --audit-level=high && osv-scanner scan --lockfile=package-lock.json",
-    "security:workflows": "actionlint && zizmor .github/workflows",
+    "security:licenses": "node scripts/security/check-licenses.mjs",
+    "security:workflows": "actionlint && zizmor --offline .github/workflows",
     "security:secrets": "gitleaks detect --source . --redact --no-banner",
     "security:sbom": "cyclonedx-npm --output-file sbom.cdx.json"
   }
@@ -76,6 +77,20 @@ Target `package.json` additions:
 ```
 
 If a tool is unavailable locally, say so and rely on the required CI check. Do not silently skip it.
+
+## Gates that must not depend on the GitHub API
+
+Three required checks used to fail for reasons unrelated to the change, because each one called the GitHub API and the installation rate limit was exhausted:
+
+| Symptom | Real cause | What the gate does now |
+|---|---|---|
+| `gitleaks-action` exits in 4 s with `API rate limit exceeded for installation` | The action asks the API who it is before scanning | The Gitleaks 8.30.1 binary is downloaded, checked against a pinned SHA-256, and run locally with `--source .`; no token |
+| `zizmor` reports `impostor-commit failed … 403 Forbidden` | `GH_TOKEN` was set, so the online audits tried to resolve every pinned action | `zizmor --offline`; the five online audits self-skip and are compensated by Dependabot on `github-actions`, the full-SHA pin check in `check-policy.mjs`, and the drift audit |
+| `dependency-review-action` fails with "Dependency review is not supported on this repository" | A 403 from the same limit, reported as a repository problem | `npm run security:licenses` reads `package-lock.json` directly: allowlist for the production closure plus a stale-notice check; `npm audit` and OSV-Scanner cover vulnerabilities |
+
+A gate that is red for infrastructure reasons is a false signal: it trains people to ignore the check. None of the replacements weakens a threshold — the licence allowlist is stricter than the one dependency review was configured with, because it is enforced on every run rather than only when the API happens to answer. See D-038 in the decision log.
+
+The remaining API-dependent checks are the ones that must be: CodeQL upload, OSV-Scanner's advisory database over the network, and the scheduled drift audit. A failure there is a real failure and is handled as one.
 
 ## Artifact inspection
 

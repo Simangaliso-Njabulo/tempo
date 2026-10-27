@@ -48,8 +48,9 @@ Invoke-Gh 'Could not set read-only default workflow permissions.' {
     -F can_approve_pull_request_reviews=false
 }
 
-# Only GitHub-owned and verified actions, pinned to full SHAs, plus the two
-# allow-listed publishers whose actions are pinned in the workflows.
+# Only GitHub-owned and verified actions, pinned to full SHAs, plus the one
+# allow-listed publisher whose action is pinned in the workflows. Gitleaks is
+# no longer an action: the workflow runs its release binary (D-038).
 Invoke-Gh 'Could not restrict Actions to selected creators.' {
   gh api -X PUT "repos/$Owner/$Repo/actions/permissions" `
     -F enabled=true `
@@ -61,7 +62,7 @@ Invoke-Gh 'Could not set the allowed-actions list.' {
   @{
     github_owned_allowed = $true
     verified_allowed     = $true
-    patterns_allowed     = @('gitleaks/gitleaks-action@*', 'ossf/scorecard-action@*')
+    patterns_allowed     = @('ossf/scorecard-action@*')
   } | ConvertTo-Json | gh api -X PUT "repos/$Owner/$Repo/actions/permissions/selected-actions" --input -
 }
 

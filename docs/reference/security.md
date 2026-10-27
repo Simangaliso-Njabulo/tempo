@@ -25,8 +25,11 @@
 | [OpenSSF Best Practices Badge](https://www.bestpractices.dev/) | Open-source project hygiene | Passing level target |
 | [GitHub CodeQL](https://codeql.github.com/docs/) | Static analysis | `security-static`, security-extended JavaScript/TypeScript |
 | [GitHub secret scanning](https://docs.github.com/en/code-security/secret-scanning) | Secret detection | Platform scanning plus push protection |
-| [GitHub dependency review](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review) | Pull-request dependency risk | `security-supply-chain` |
-| [GitHub Actions hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions) | Workflow and token security | Pinned actions, least privilege, no untrusted `pull_request_target`, `actionlint`, `zizmor` |
+| [GitHub dependency review](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review) | Pull-request dependency risk | Not used: needs a GitHub API token and reports rate-limit failures as findings (D-038); replaced by the lockfile licence allowlist |
+| [GitHub Actions hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions) | Workflow and token security | Pinned actions, least privilege, no untrusted `pull_request_target`, `actionlint`, `zizmor --offline` |
+| [Gitleaks releases](https://github.com/gitleaks/gitleaks/releases) | Secret scanning | 8.30.1 Linux x64 tarball, verified by SHA-256, run over full history with no token (D-038) |
+| [zizmor](https://docs.zizmor.sh/) | Workflow attack-pattern audit | `--offline`; the five online audits self-skip and are compensated by Dependabot and the pin check (D-038) |
+| [SPDX licence list](https://spdx.org/licenses/) | Licence identifiers | The allowlist and the `OR`/`AND`/`WITH` handling in `scripts/security/check-licenses.mjs` |
 | [GitHub artifact attestations](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations) | Build provenance | Release attestation and artifact digest |
 | [GitHub private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities) | Private reports | [SECURITY.md](../../SECURITY.md) |
 | [MDN Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) | CSP directives and meta limitations | Strict meta CSP; `frame-ancestors` is not enforceable from meta |

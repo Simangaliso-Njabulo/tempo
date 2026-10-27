@@ -40,6 +40,25 @@ async function stopFrameRecorder(page: Page) {
   });
 }
 
+/**
+ * Assert the 50 ms budget with a message that names the offending frames.
+ *
+ * A bare `expect([]).toEqual([61])` says a frame was long but not how many or
+ * how long, which made one unreproducible failure (2026-10-27) impossible to
+ * classify after the fact. The threshold is unchanged; only the diagnosis is
+ * better: the total frame count and the sorted worst frames come with the
+ * error, so a slow machine and a slow drag look different.
+ */
+function expectFramesWithinBudget(frames: number[]) {
+  const round = (value: number) => Math.round(value * 10) / 10;
+  const long = frames.filter((duration) => duration > 50);
+  const worst = [...frames].sort((a, b) => b - a).slice(0, 8).map(round);
+  expect(
+    long,
+    `${long.length} of ${frames.length} frames over 50 ms; worst frames (ms): ${worst.join(', ')}`,
+  ).toEqual([]);
+}
+
 async function addFocusBlock(page: Page) {
   await page.getByRole('button', { name: 'Add block' }).click();
   await page.getByRole('tab', { name: 'Focus' }).click();
@@ -103,7 +122,7 @@ test.describe('performance @performance', () => {
     await page.waitForTimeout(100);
     const result = await stopFrameRecorder(page);
 
-    expect(result.frames.filter((duration) => duration > 50)).toEqual([]);
+    expectFramesWithinBudget(result.frames);
     expect(result.nodes).toBeLessThanOrEqual(1500);
 
     // The drop is a real action: it moves the block and offers one undo.
@@ -124,7 +143,7 @@ test.describe('performance @performance', () => {
     await page.waitForTimeout(100);
     const result = await stopFrameRecorder(page);
 
-    expect(result.frames.filter((duration) => duration > 50)).toEqual([]);
+    expectFramesWithinBudget(result.frames);
     await expect(page.getByRole('button', { name: /Performance check/ })).toHaveAccessibleName(
       /10:00/,
     );

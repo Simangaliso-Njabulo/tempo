@@ -157,7 +157,7 @@ The full mapping is in [agent-threat-model.md](../security/agent-threat-model.md
 | ASI01 Goal hijack | Fixed prompt; issue text is data; `loop:approved` recheck; scope diff |
 | ASI02 Tool misuse | Fixed allowlist; timeouts; one branch; no force-push |
 | ASI03 Privilege abuse | Dedicated user; fine-grained token; no admin; protected paths |
-| ASI04 Supply chain | Pinned actions; lockfile; dependency review; fixed model ladder |
+| ASI04 Supply chain | Pinned actions; lockfile; licence allowlist; fixed model ladder |
 | ASI05 Code execution | No auto-execution; tool-mediated edits; no `eval`; CI |
 | ASI06 Memory poisoning | No persistent agent memory; schema-checked state; fixed prompt |
 | ASI07 Inter-agent comms | N/A in v1: one agent, no MCP |

@@ -116,7 +116,8 @@ fieldset.section {
 .danger,
 .chip,
 .segment,
-.tab {
+.tab,
+.link {
   min-height: var(--tempo-hit-target);
   border: 1px solid var(--tempo-color-line);
   border-radius: var(--tempo-radius-md);
@@ -124,6 +125,18 @@ fieldset.section {
   color: inherit;
   padding: 0 var(--tempo-space-3);
   font: inherit;
+}
+
+/* Licence text is a real document, so it is a link rather than a button, but
+ * it still gets the full 44 pt target. */
+.link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  color: var(--tempo-color-text-secondary);
+  text-decoration: none;
+  text-align: center;
 }
 
 .button:disabled,

@@ -109,6 +109,22 @@ it('shows install instructions until the app is on the Home Screen', () => {
   expect(screen.queryByText('Open TEMPO in Safari.')).not.toBeInTheDocument();
 });
 
+it('links the licences that ship with the build', () => {
+  render(<Settings {...props()} />);
+
+  // The notices are shipped files, not inline text: the script that generates
+  // them is also the script that verifies them (`npm run security:licenses`).
+  expect(screen.getByRole('link', { name: 'Third-party notices' })).toHaveAttribute(
+    'href',
+    `${import.meta.env.BASE_URL}licenses/THIRD-PARTY-NOTICES.txt`,
+  );
+  expect(screen.getByRole('link', { name: 'Geist Sans licence' })).toHaveAttribute(
+    'href',
+    `${import.meta.env.BASE_URL}licenses/geist-OFL.txt`,
+  );
+  expect(screen.getByText('Version 0.1.0')).toBeInTheDocument();
+});
+
 it('shows a plain error when a setting cannot be saved', async () => {
   const onUpdate = vi.fn().mockRejectedValue(new Error('That setting could not be saved.'));
   render(<Settings {...props({ onUpdate })} />);

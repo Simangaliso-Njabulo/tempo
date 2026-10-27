@@ -16,9 +16,9 @@
 | `visual` | `ci.yml` | Dark and light screenshot regression |
 | `lighthouse` | `ci.yml` | Median of three runs: mobile Performance >= 95, Accessibility 100, Best Practices 100 |
 | `security-static` | `security.yml` | CodeQL `security-extended`, no high or critical finding |
-| `security-supply-chain` | `security.yml` | Dependency review, `npm audit`, OSV-Scanner, SBOM |
-| `security-workflows` | `security.yml` | `actionlint`, `zizmor`, full-SHA pins, least privilege |
-| `security-secrets` | `security.yml` | Gitleaks, plus GitHub secret scanning |
+| `security-supply-chain` | `security.yml` | Licence allowlist from the lockfile, `npm audit`, OSV-Scanner, SBOM |
+| `security-workflows` | `security.yml` | `actionlint`, `zizmor --offline`, full-SHA pins, least privilege |
+| `security-secrets` | `security.yml` | Gitleaks binary over full history, plus GitHub secret scanning |
 | `security-policy` | `security.yml` | CSP, protected paths, risk label, waivers, PR evidence |
 
 A red pull request is not merged. There is no merge-anyway button for a security check. An infrastructure emergency needs a recorded human override and a retrospective; the loop may never override a check.

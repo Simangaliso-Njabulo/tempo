@@ -120,7 +120,7 @@ Met by the platform. GitHub Pages serves the app over HTTPS only, and the PWA re
 - The app has no logger and no remote error reporting. Errors surface as a plain, user-safe message; a `DomainError` code is shown as text, never a stack trace.
 - The loop's local log records timestamps, model names, and outcomes only. It never records an issue body, a token, or plan data.
 - Workflows do not print secrets: no `echo "${{ secrets.* }}"`, no `set -x` around a token, and `GITHUB_TOKEN` is read-scoped by default.
-- `security-secrets` runs Gitleaks over history, and GitHub secret scanning with push protection blocks a push containing a known secret.
+- `security-secrets` runs the Gitleaks 8.30.1 binary, pinned by SHA-256, over the full history with no API token, and GitHub secret scanning with push protection blocks a push containing a known secret.
 
 ## V17 — WebRTC
 
@@ -133,7 +133,7 @@ N/A. TEMPO opens no peer connection, requests no camera or microphone, and enume
 | No `frame-ancestors` / clickjacking header (Pages cannot set headers) | No credentials to steal; destructive actions need a fresh gesture | Revisit if a backend or account is ever added |
 | CSP delivered as a meta tag, not a header | The document is static, has no inline script, and loads only same-origin assets; `security-policy` compares the tag with policy | Move to a header if hosting ever allows it |
 | No Trusted Types enforcement | No DOM sink exists: no `innerHTML`, no dynamic HTML, no `eval`; the pattern scan fails the build if one appears | Adopt `require-trusted-types-for 'script'` when Safari supports it |
-| No automated dependency-freshness SLA beyond Dependabot | Dependabot daily, OSV-Scanner, `npm audit`, dependency review | Track advisory age in the drift audit |
+| No automated dependency-freshness SLA beyond Dependabot | Dependabot daily, OSV-Scanner, `npm audit`, licence allowlist | Track advisory age in the drift audit |
 
 ## Re-assessment
 

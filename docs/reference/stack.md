@@ -19,7 +19,7 @@ The stack is chosen for a local-first, installable iOS PWA that must stay small,
 | Performance | Lighthouse | Budget checks for performance, accessibility, and best practices. | [Lighthouse](https://developer.chrome.com/docs/lighthouse/overview) |
 | Font | Geist Sans | Modern minimalist grotesque with excellent numerals; self-hosted subset, system fallback. | [Geist](https://vercel.com/font), [Fontsource](https://fontsource.org/fonts/geist) |
 | Layer boundaries | `eslint-plugin-boundaries` | Enforces the domain/application/infrastructure/presentation split. | [eslint-plugin-boundaries](https://github.com/javierbrea/eslint-plugin-boundaries) |
-| Security | GitHub-native + free OSS | CodeQL, secret scanning, Dependabot, dependency review, `npm audit`, OSV-Scanner, Gitleaks, pinned actions, `actionlint`, `zizmor`, SBOM, provenance, Scorecard. No paid gate. | [Security reference](security.md) |
+| Security | GitHub-native + free OSS | CodeQL, secret scanning, Dependabot, licence allowlist, `npm audit`, OSV-Scanner, Gitleaks, pinned actions, `actionlint`, `zizmor`, SBOM, provenance, Scorecard. No paid gate. | [Security reference](security.md) |
 | Encryption | Web Crypto | Platform AES-GCM and PBKDF2 for the optional encrypted backup; no crypto library. | [MDN Web Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) |
 
 ## Architecture
@@ -119,7 +119,7 @@ Dates are local `YYYY-MM-DD` keys. Times are minute-of-day integers. Display for
 - No date library until the date requirements are clear; if added, it must be tree-shakeable and timezone-safe.
 - No drag-and-drop library for the iOS timeline until Pointer Events prove insufficient.
 - Dependencies are human-reviewed. The autonomous loop must not upgrade them.
-- Every dependency change passes dependency review, `npm audit`, OSV-Scanner, and a lockfile check. High or critical findings block merge.
+- Every dependency change passes the licence allowlist, `npm audit`, OSV-Scanner, and a lockfile check. High or critical findings block merge, and a shipped package must be named in the third-party notices.
 - New dependencies need a recorded decision, a bundle-size check, a license check, and a threat-model note if they add code execution, network, or data access.
 - Prefer Web Crypto, React, Dexie, and platform APIs over a new library. No remote runtime origin.
 - GitHub Actions are pinned to full commit SHAs and run with least privilege. Workflow changes are human-reviewed.

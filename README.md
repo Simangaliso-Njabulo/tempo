@@ -140,3 +140,11 @@ Operator guide: [docs/loop/README.md](docs/loop/README.md). Run log: [docs/loop/
 ## License
 
 MIT — see [LICENSE](LICENSE). Copyright 2026 Simangaliso Njabulo Madonsela.
+
+TEMPO ships third-party code and one font, so their licences ship too:
+[`public/licenses/THIRD-PARTY-NOTICES.txt`](public/licenses/THIRD-PARTY-NOTICES.txt)
+(React, React DOM, Scheduler — MIT; Dexie, Dexie React Hooks — Apache-2.0) and
+[`public/licenses/geist-OFL.txt`](public/licenses/geist-OFL.txt) (Geist Sans,
+OFL-1.1). Both are linked from Settings → About and are precached for offline
+reading. `npm run security:licenses` fails when a shipped package is added or
+removed without the notices being updated.
