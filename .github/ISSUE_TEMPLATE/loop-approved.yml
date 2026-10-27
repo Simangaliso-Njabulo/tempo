@@ -1,0 +1,75 @@
+name: Loop-approved change
+description: A small, human-approved change for the low-risk loop
+title: "[loop] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A human must review this issue and add exactly one of `risk:low`, `risk:medium`, or `risk:high`.
+        Do not add `loop:approved` until the issue is clear, bounded, and cited.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing today?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should change, in observable terms?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Testable statements. Include the test level where possible.
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      options:
+        - risk:low — copy, isolated test, docs, small non-behavioral refactor
+        - risk:medium — component behavior, interaction, performance, visual change
+        - risk:high — storage, security, dependency, migration, data, release
+    validations:
+      required: true
+  - type: input
+    id: decisions
+    attributes:
+      label: Decision ID(s)
+      description: For example D-020. If none, say "none".
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Source map entries, design contract sections, or external sources.
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: What must the loop not touch?
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data and migration impact
+      description: Say "none" or describe it. Any data impact is at least risk:high.
+    validations:
+      required: true
+  - type: textarea
+    id: iphone
+    attributes:
+      label: Real-iPhone check
+      description: What must a human verify after the change?
+    validations:
+      required: true

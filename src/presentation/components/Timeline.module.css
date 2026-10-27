@@ -5,6 +5,14 @@
   padding-bottom: 120px;
 }
 
+/*
+ * The timeline is a keyboard-scrollable region (tabindex 0), so it needs a
+ * visible focus ring. An inset ring stays visible inside the scroll clip.
+ */
+.viewport:focus-visible {
+  outline-offset: -2px;
+}
+
 .canvas {
   position: relative;
   height: calc(24 * var(--tempo-hour-height));

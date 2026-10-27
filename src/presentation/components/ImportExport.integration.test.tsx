@@ -1,3 +1,4 @@
+import { configure } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Clock } from '../../application/ports/clock';
@@ -13,6 +14,11 @@ import { backupCodec } from '../../infrastructure/export/backup-codec';
 import { DexieBackupGateway } from '../../infrastructure/export/dexie-backup-gateway';
 import { DexieMetaRepository } from '../../infrastructure/repositories/dexie-meta-repository';
 import { ImportExport } from './ImportExport';
+
+// PBKDF2 derivation for the encrypted round-trip is deliberately slow. Under a
+// parallel run it can outlast the one-second default, so give the crypto path a
+// real budget instead of asserting less.
+configure({ asyncUtilTimeout: 10_000 });
 
 it(
   'round-trips an encrypted backup through the sheet and fails closed on a wrong passphrase',

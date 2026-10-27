@@ -1,40 +1,45 @@
 .card {
-  display: grid;
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
   gap: var(--tempo-space-2);
-  margin: var(--tempo-space-3) 0;
-  padding: var(--tempo-space-4);
-  border: 1px solid var(--tempo-color-line);
-  border-radius: var(--tempo-radius-md);
+  margin-top: var(--tempo-space-2);
+  padding-top: var(--tempo-space-2);
+  padding-bottom: var(--tempo-space-1);
+  border-top: 1px solid var(--tempo-color-line);
   background: var(--tempo-color-surface-1);
 }
 
+.open {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  min-height: var(--tempo-hit-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
 .title {
-  margin: 0;
-  font-size: var(--tempo-font-size-title);
+  font-size: var(--tempo-font-size-caption);
+  font-weight: var(--tempo-font-weight-semibold);
 }
 
 .copy {
-  margin: 0;
   color: var(--tempo-color-text-secondary);
-  font-size: var(--tempo-font-size-caption);
-}
-
-.steps {
-  display: grid;
-  gap: var(--tempo-space-1);
-  margin: 0;
-  padding-left: var(--tempo-space-5);
-  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-micro);
 }
 
 .dismiss {
-  justify-self: start;
+  min-width: var(--tempo-hit-target);
   min-height: var(--tempo-hit-target);
   border: 1px solid var(--tempo-color-line);
   border-radius: var(--tempo-radius-md);
   background: transparent;
-  color: var(--tempo-color-accent-text);
-  padding: 0 var(--tempo-space-4);
-  font: inherit;
-  font-weight: var(--tempo-font-weight-semibold);
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-title);
+  line-height: 1;
 }

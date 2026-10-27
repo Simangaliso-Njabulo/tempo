@@ -7,9 +7,11 @@ import {
   type RefObject,
 } from 'react';
 import type { Block } from '../../domain/entities/block';
+import type { DragGhostState } from '../hooks/use-drag';
 import { assignLanes, HOUR_HEIGHT } from '../utils/timeline-layout';
 import type { TimeFormat } from '../utils/format-time';
 import { Block as TimelineBlock } from './Block';
+import { DragGhost } from './DragGhost';
 import { HourGrid } from './HourGrid';
 import { NowLine } from './NowLine';
 import styles from './Timeline.module.css';
@@ -20,6 +22,7 @@ export function Timeline({
   viewportRef,
   blocks,
   carriedTaskIds = EMPTY_IDS,
+  ghost,
   nowMin,
   timeFormat,
   dragBlockId,
@@ -31,6 +34,7 @@ export function Timeline({
   viewportRef?: RefObject<HTMLDivElement | null>;
   blocks: Block[];
   carriedTaskIds?: ReadonlySet<string>;
+  ghost?: DragGhostState | null;
   nowMin: number;
   timeFormat: TimeFormat;
   dragBlockId?: string;
@@ -63,7 +67,7 @@ export function Timeline({
       className={styles.viewport}
       role="region"
       aria-label="Day timeline"
-      tabIndex={-1}
+      tabIndex={0}
     >
       <div className={styles.canvas}>
         <HourGrid />
@@ -82,6 +86,7 @@ export function Timeline({
             onPointerUp={onPointerUp}
           />
         ))}
+        {ghost ? <DragGhost ghost={ghost} timeFormat={timeFormat} /> : null}
       </div>
     </div>
   );

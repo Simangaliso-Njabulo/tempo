@@ -5,6 +5,7 @@ import {
   useState,
   type FormEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import type { Block } from '../../domain/entities/block';
 import type { Routine, RoutineException } from '../../domain/entities/routine';
@@ -24,6 +25,7 @@ export function Tray({
   routines,
   exceptions,
   timeFormat,
+  installPrompt,
   onAddTask,
   onOpenTask,
   onPlaceTask,
@@ -39,6 +41,7 @@ export function Tray({
   routines: Routine[];
   exceptions: RoutineException[];
   timeFormat: TimeFormat;
+  installPrompt?: ReactNode;
   onAddTask: (title: string) => Promise<void>;
   onOpenTask: (task: Task) => void;
   onPlaceTask: (task: Task) => void;
@@ -219,6 +222,8 @@ export function Tray({
           ))}
         </div>
       ) : null}
+
+      {installPrompt}
     </section>
   );
 }

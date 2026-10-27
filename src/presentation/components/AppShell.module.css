@@ -50,3 +50,60 @@
   background: var(--tempo-color-surface-1);
   border-top: 1px solid var(--tempo-color-line);
 }
+
+/*
+ * Tablet: keep the timeline at a readable measure.
+ * Feel contract 3.4: max content width 720 px.
+ */
+@media (min-width: 720px) and (max-width: 1023.98px) {
+  .shell {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+}
+
+/*
+ * Desktop/iPad landscape: the tray becomes a right-hand column and the
+ * timeline keeps the 720 px measure (Feel contract 3.4).
+ */
+@media (min-width: 1024px) {
+  .shell {
+    max-width: 1160px;
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'header header'
+      'main tray';
+  }
+
+  .header {
+    grid-area: header;
+  }
+
+  .main {
+    grid-area: main;
+    width: 100%;
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .tray {
+    grid-area: tray;
+    position: static;
+    align-self: stretch;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border-top: 0;
+    border-left: 1px solid var(--tempo-color-line);
+    padding-bottom: 0;
+  }
+
+  /* The tray is always open in the side column. */
+  .tray > div {
+    height: 100%;
+    max-height: none;
+    border-top: 0;
+  }
+}

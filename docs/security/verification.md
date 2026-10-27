@@ -1,6 +1,6 @@
 # Security verification
 
-**Status:** specified 2026-10-25. The commands below are the target contract. They become real when the operations plan creates the scripts and required checks; until then, run what exists and record the gap.
+**Status:** implemented 2026-10-27. The workflows, scripts, and local gates below exist and run locally. They become an enforced merge gate only after `main` is pushed, all fourteen checks have run on a pull request, and branch protection is applied. Until then, run the local commands and record the gap.
 
 ## Rule
 
@@ -18,7 +18,7 @@ A security claim needs evidence. The evidence is a command and its result, a tes
 | `build` | Production build succeeds and PWA artifacts exist | `npm run build && npm run check:pwa` | Yes |
 | `size` | JS, CSS, and font budgets | `npm run size` | Yes |
 | `visual` | Dark and light screenshot regression | `npm run test:visual -- --project=webkit-iphone` | Yes |
-| `lighthouse` | Mobile Performance >=95, Accessibility 100, Best Practices 100 | `npx lhci autorun` | Yes |
+| `lighthouse` | Mobile Performance >=95, Accessibility 100, Best Practices 100 | `npm run lighthouse` | Yes |
 | `security-static` | CodeQL finds no high/critical issue in the changed code | CodeQL workflow, security-extended | Yes |
 | `security-supply-chain` | No high/critical vulnerable dependency; lockfile and SBOM are consistent | dependency review, `npm audit --audit-level=high`, OSV-Scanner, CycloneDX | Yes |
 | `security-workflows` | Workflows parse, are pinned, and have least privilege | `actionlint`, `zizmor` | Yes |

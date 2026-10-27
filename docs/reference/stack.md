@@ -142,6 +142,8 @@ Locked:
 - `.ics`: hand-rolled minimal RFC 5545 writer.
 - PWA: `vite-plugin-pwa` with `generateSW` and prompt updates.
 - Visual regression: Playwright screenshots.
+- Performance gate: the `lighthouse` dev dependency driven by `scripts/lighthouse.mjs`; not `@lhci/cli`, whose tree carries high advisories (D-036).
+- SBOM: `@cyclonedx/cyclonedx-npm` producing `sbom.cdx.json`.
 - Transaction boundary: a small `UnitOfWork` around Dexie transactions.
 - Font: copy the Latin variable WOFF2 from `@fontsource-variable/geist`; no runtime font request.
 - Encryption: Web Crypto only; no crypto library.

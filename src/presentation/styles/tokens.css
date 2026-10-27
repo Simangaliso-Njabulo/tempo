@@ -29,7 +29,8 @@
   --tempo-color-line: #e4e0d8;
   --tempo-color-text-primary: #171a21;
   --tempo-color-text-secondary: #4f5563;
-  --tempo-color-text-tertiary: #737987;
+  /* 4.9:1 on the page background and 5.2:1 on white, so 13 px labels pass AA. */
+  --tempo-color-text-tertiary: #666c7a;
   --tempo-color-accent-brand: #6746ea;
   --tempo-color-accent-text: #5a38d6;
   --tempo-color-accent-fill: #6746ea;
@@ -69,6 +70,7 @@
   --tempo-hour-height: 88px;
   --tempo-now-line: 2px;
   --tempo-z-timeline: 0;
+  --tempo-z-ghost: 5;
   --tempo-z-now: 10;
   --tempo-z-tray: 20;
   --tempo-z-sheet: 30;

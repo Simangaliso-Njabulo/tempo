@@ -41,3 +41,8 @@ desktop.ini
 .cache/
 .temp/
 tmp/
+
+# Local security and Lighthouse output
+sbom.cdx.json
+lighthouse-report.html
+.monitor/

@@ -26,6 +26,7 @@ That is enforceable. Perfect detection is not.
 | Phases, roles, gates, waivers, and self-correction | [Secure SDLC](secure-sdlc.md) |
 | Control catalogue and evidence | [Controls](controls.md) |
 | Exact commands and required checks | [Verification](verification.md) |
+| ASVS 5.0 Level 2 self-assessment and gaps | [ASVS assessment](asvs.md) |
 | Secret leak, dependency compromise, agent compromise | [Incident response](incident-response.md) |
 | Local data, exports, and encryption scope | [Privacy and data protection](privacy.md) |
 | Time-boxed exceptions | [Waivers](waivers/README.md) |

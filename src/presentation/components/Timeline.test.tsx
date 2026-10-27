@@ -156,3 +156,20 @@ it('hides the decorative icons from assistive technology', () => {
     expect(icon.getAttribute('aria-hidden')).toBe('true');
   }
 });
+
+it('renders the drag ghost with the landing preview', () => {
+  render(
+    <Timeline
+      blocks={[blockInput()]}
+      ghost={{ kind: 'shifting', startMin: 540, durationMin: 45, shiftedCount: 1 }}
+      nowMin={600}
+      timeFormat="24h"
+      onOpen={noop}
+      onPointerDown={noop}
+      onPointerMove={noop}
+      onPointerUp={noop}
+    />,
+  );
+
+  expect(screen.getByText('Shift 1 block · 09:00')).toBeInTheDocument();
+});

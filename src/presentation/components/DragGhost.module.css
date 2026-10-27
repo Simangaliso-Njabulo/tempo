@@ -1,0 +1,47 @@
+.ghost {
+  position: absolute;
+  left: 64px;
+  right: 12px;
+  z-index: var(--tempo-z-ghost);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px dashed var(--tempo-color-accent-text);
+  border-radius: var(--tempo-radius-md);
+  background: color-mix(in srgb, var(--tempo-color-surface-2) 82%, transparent);
+  color: var(--tempo-color-text-primary);
+  font-size: var(--tempo-font-size-micro);
+  line-height: 1.15;
+  pointer-events: none;
+}
+
+.label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: var(--tempo-font-weight-semibold);
+}
+
+.meta {
+  color: var(--tempo-color-text-secondary);
+}
+
+.shifting,
+.anchored {
+  border-color: var(--tempo-color-carry);
+  color: var(--tempo-color-carry);
+}
+
+.blocked {
+  border-color: var(--tempo-color-danger);
+  color: var(--tempo-color-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost {
+    transition: none;
+  }
+}

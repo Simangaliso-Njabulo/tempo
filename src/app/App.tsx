@@ -107,6 +107,7 @@ function Screen() {
   const install = useInstall({
     settingsDismissed: plan?.settings.installCardDismissed ?? false,
     standalone: services.isStandalone(),
+    placedBlocks: blocks.length,
   });
   const lastBackupAt = useMemo(() => {
     const record = plan?.meta.find((item) => item.key === 'lastBackupAt');
@@ -260,7 +261,7 @@ function Screen() {
     },
   });
 
-  const openBlock = (block: Block) => setSelectedBlockId(block.id);
+  const openBlock = useCallback((block: Block) => setSelectedBlockId(block.id), []);
   const openTask = (task: Task) => setSelectedTaskId(task.id);
   const openSettings = () => setSheet('settings');
   const openClose = () => {
@@ -452,24 +453,27 @@ function Screen() {
           }}
           onStartDrag={(event, task) => trayDrag.start(event, task.id)}
           onOpenPlan={openAdd}
+          installPrompt={
+            install.show ? (
+              <InstallCard
+                onDismiss={() => {
+                  void dismissInstall();
+                }}
+              />
+            ) : null
+          }
         />
       }
     >
       <div className={styles.dayHead}>
         <DaySummary planned={plannedCount} done={doneCount} minutes={totalMinutes} />
-        {install.show ? (
-          <InstallCard
-            onDismiss={() => {
-              void dismissInstall();
-            }}
-          />
-        ) : null}
       </div>
       <div className={styles.dayBody}>
         <Timeline
           viewportRef={timelineRef}
           blocks={blocks}
           carriedTaskIds={carriedTaskIds}
+          ghost={drag.ghost}
           nowMin={date === today ? nowMin : 0}
           timeFormat={timeFormat}
           dragBlockId={drag.drag?.blockId}

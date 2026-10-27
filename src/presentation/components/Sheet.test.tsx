@@ -45,3 +45,45 @@ it('renders nothing while closed', () => {
   );
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('traps Tab and Shift+Tab inside the panel', () => {
+  render(
+    <Sheet open title="Example" onClose={() => undefined} footer={<button type="button">Save</button>}>
+      <button type="button">First</button>
+      <button type="button">Last</button>
+    </Sheet>,
+  );
+
+  const close = screen.getByRole('button', { name: 'Close' });
+  const save = screen.getByRole('button', { name: 'Save' });
+
+  save.focus();
+  fireEvent.keyDown(document, { key: 'Tab' });
+  expect(close).toHaveFocus();
+
+  close.focus();
+  fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+  expect(save).toHaveFocus();
+});
+
+it('focuses the panel on open and returns focus on close', () => {
+  const trigger = document.createElement('button');
+  trigger.textContent = 'Open sheet';
+  document.body.append(trigger);
+  trigger.focus();
+
+  const { rerender } = render(
+    <Sheet open title="Example" onClose={() => undefined}>
+      <p>Inside</p>
+    </Sheet>,
+  );
+  expect(screen.getByRole('dialog', { name: 'Example' })).toHaveFocus();
+
+  rerender(
+    <Sheet open={false} title="Example" onClose={() => undefined}>
+      <p>Inside</p>
+    </Sheet>,
+  );
+  expect(trigger).toHaveFocus();
+  trigger.remove();
+});

@@ -1,4 +1,5 @@
 import {
+  memo,
   useLayoutEffect,
   useRef,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -20,17 +21,7 @@ export const KIND_LABEL = {
 /** Below this body height there is only room for one 11 px line. */
 const COMPACT_BODY_MAX = 44;
 
-export function Block({
-  block,
-  lane,
-  timeFormat,
-  dragging,
-  carried = false,
-  onOpen,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-}: {
+interface BlockProps {
   block: BlockEntity;
   lane: number;
   timeFormat: TimeFormat;
@@ -40,7 +31,24 @@ export function Block({
   onPointerDown: (event: ReactPointerEvent, block: BlockEntity) => void;
   onPointerMove: (event: ReactPointerEvent) => void;
   onPointerUp: (event: ReactPointerEvent) => void;
-}) {
+}
+
+/**
+ * A block only re-renders when its own props change. During a drag the other
+ * blocks keep the same entity, lane, and callbacks, so a frame touches the
+ * dragged block and the ghost instead of the whole timeline.
+ */
+export const Block = memo(function Block({
+  block,
+  lane,
+  timeFormat,
+  dragging,
+  carried = false,
+  onOpen,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+}: BlockProps) {
   const hitRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const leaderRef = useRef<HTMLSpanElement>(null);
@@ -146,4 +154,4 @@ export function Block({
       </div>
     </article>
   );
-}
+});

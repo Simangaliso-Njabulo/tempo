@@ -1,0 +1,35 @@
+name: Loop audit proposal
+description: An evidence-backed proposal from audit mode; not approved for code
+title: "[proposal] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Audit mode may propose issues. A human must promote a proposal to `loop:approved` and add a risk label.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: File and line, failing test, measured regression, or reference.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: The smallest change that addresses the evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: why_now
+    attributes:
+      label: Why this is worth doing
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Suggested risk
+      description: low, medium, or high, with a reason.
+    validations:
+      required: true

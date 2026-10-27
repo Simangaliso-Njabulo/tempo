@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "requiredChecks": [
+    "lint",
+    "typecheck",
+    "unit",
+    "e2e",
+    "a11y",
+    "build",
+    "size",
+    "visual",
+    "lighthouse",
+    "security-static",
+    "security-supply-chain",
+    "security-workflows",
+    "security-secrets",
+    "security-policy"
+  ],
+  "protectedPaths": [
+    "^\\.github/",
+    "^security/",
+    "^\\.github/CODEOWNERS$",
+    "^AGENTS\\.md$",
+    "^docs/security/",
+    "^docs/reference/security\\.md$",
+    "^docs/reference/ai-development\\.md$",
+    "^scripts/loop/",
+    "^scripts/ops/",
+    "^package\\.json$",
+    "^package-lock\\.json$",
+    "^vite\\.config\\.",
+    "^index\\.html$",
+    "^public/manifest\\.webmanifest$",
+    "^src/infrastructure/export/",
+    "^src/infrastructure/db/"
+  ],
+  "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+  "waiverDays": { "high": 30, "medium": 90 },
+  "attestationDays": 90,
+  "limits": { "changedLines": 400, "changedFiles": 12 }
+}

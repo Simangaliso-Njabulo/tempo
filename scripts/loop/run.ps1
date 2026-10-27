@@ -366,7 +366,7 @@ Model: ``$modelUsed``
 
 ## Data or migration impact
 
-None unless the issue explicitly describes it. Any data impact should have been labeled `risk:high`.
+None unless the issue explicitly describes it. Any data impact should have been labeled ``risk:high``.
 
 ## Screenshots or recording
 

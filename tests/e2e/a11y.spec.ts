@@ -50,9 +50,9 @@ test.describe('accessibility @a11y', () => {
     await page.getByRole('button', { name: 'Add block' }).click();
     await page.getByLabel('Title').fill('Keyboard check');
     await page.getByLabel('Start time').fill('09:00');
-    await page.getByRole('button', { name: 'Add' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true }).click();
 
-    const block = page.getByRole('button', { name: /Keyboard check/ });
+    const block = page.locator('#timeline').getByRole('button', { name: /Keyboard check/ });
     await block.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('dialog')).toBeVisible();
