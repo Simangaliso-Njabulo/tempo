@@ -1,0 +1,40 @@
+.card {
+  display: grid;
+  gap: var(--tempo-space-2);
+  margin: var(--tempo-space-3) 0;
+  padding: var(--tempo-space-4);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-surface-1);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--tempo-font-size-title);
+}
+
+.copy {
+  margin: 0;
+  color: var(--tempo-color-text-secondary);
+  font-size: var(--tempo-font-size-caption);
+}
+
+.steps {
+  display: grid;
+  gap: var(--tempo-space-1);
+  margin: 0;
+  padding-left: var(--tempo-space-5);
+  color: var(--tempo-color-text-secondary);
+}
+
+.dismiss {
+  justify-self: start;
+  min-height: var(--tempo-hit-target);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: transparent;
+  color: var(--tempo-color-accent-text);
+  padding: 0 var(--tempo-space-4);
+  font: inherit;
+  font-weight: var(--tempo-font-weight-semibold);
+}

@@ -1,0 +1,67 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  background: #05070c;
+}
+
+body {
+  background: #05070c;
+  color: #f4f1ea;
+}
+
+#root:empty::after {
+  content: 'TEMPO';
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.24em;
+  color: #a99bff;
+}
+
+@media (prefers-color-scheme: light) {
+  html,
+  body {
+    background: #f4f1ea;
+  }
+
+  body {
+    color: #17141f;
+  }
+
+  #root:empty::after {
+    color: #5c3fd1;
+  }
+}
+
+html[data-theme='light'],
+html[data-theme='light'] body {
+  background: #f4f1ea;
+}
+
+html[data-theme='light'] body {
+  color: #17141f;
+}
+
+html[data-theme='light'] #root:empty::after {
+  color: #5c3fd1;
+}
+
+html[data-theme='dark'],
+html[data-theme='dark'] body {
+  background: #05070c;
+}
+
+html[data-theme='dark'] body {
+  color: #f4f1ea;
+}
+
+html[data-theme='dark'] #root:empty::after {
+  color: #a99bff;
+}

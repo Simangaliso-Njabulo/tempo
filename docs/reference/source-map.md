@@ -13,10 +13,12 @@ Use this table before making a change. It is the fastest way to keep TEMPO consi
 | Typography or the wordmark | [HIG typography](https://developer.apple.com/design/human-interface-guidelines/typography), [Geist](https://vercel.com/font), [Fontsource Geist](https://fontsource.org/fonts/geist) | D-018 |
 | Sheets, fields, or keyboard behavior | [HIG sheets](https://developer.apple.com/design/human-interface-guidelines/sheets), [HIG modality](https://developer.apple.com/design/human-interface-guidelines/modality), [HIG text fields](https://developer.apple.com/design/human-interface-guidelines/text-fields), [HIG virtual keyboards](https://developer.apple.com/design/human-interface-guidelines/virtual-keyboards) | D-021, D-023 |
 | Install, manifest, icons, or offline shell | [PWA notes](pwa.md), [web.dev Learn PWA](https://web.dev/learn/pwa/), [W3C Web App Manifest](https://www.w3.org/TR/appmanifest/) | D-001, D-019, D-021 |
-| Storage, persistence, or backup | [PWA notes](pwa.md), [MDN StorageManager.persist()](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist), [Dexie](https://dexie.org/docs/) | D-002, D-025 |
-| `.ics` export or reminders | [RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545), [PWA notes](pwa.md) | D-009 |
-| AI loop, risk, or automation | [AI development notes](ai-development.md), [OpenCode docs](https://opencode.ai/docs/), [GitHub Actions](https://docs.github.com/en/actions) | D-011, D-012, D-013 |
-| Architecture or dependencies | [Stack notes](stack.md), [React](https://react.dev/), [Vite](https://vite.dev/guide/), [TypeScript](https://www.typescriptlang.org/docs/), [Dexie](https://dexie.org/docs/) | D-016, D-017 |
+| Storage, persistence, backup, or encryption | [PWA notes](pwa.md), [Privacy and data protection](../security/privacy.md), [Threat model](../security/threat-model.md), [MDN StorageManager.persist()](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist), [MDN Web Crypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API), [Dexie](https://dexie.org/docs/) | D-002, D-025, D-035 |
+| Import, export, `.ics`, or untrusted files | [Privacy and data protection](../security/privacy.md), [Controls](../security/controls.md), [OWASP File Upload Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html), [RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545) | D-009, D-035 |
+| AI loop, risk, or automation | [AI development notes](ai-development.md), [Agent threat model](../security/agent-threat-model.md), [OpenCode docs](https://opencode.ai/docs/), [GitHub Actions](https://docs.github.com/en/actions) | D-011, D-012, D-013, D-034 |
+| Architecture or dependencies | [Stack notes](stack.md), [Security reference](security.md), [Controls](../security/controls.md), [React](https://react.dev/), [Vite](https://vite.dev/guide/), [TypeScript](https://www.typescriptlang.org/docs/), [Dexie](https://dexie.org/docs/) | D-016, D-017, D-032, D-033 |
+| Security, CSP, secrets, or supply chain | [Security program](../security/README.md), [Security reference](security.md), [Threat model](../security/threat-model.md), [Verification](../security/verification.md) | D-032, D-033, D-034, D-035 |
+| Branch protection, CI gates, or release | [Verification](../security/verification.md), [Secure SDLC](../security/secure-sdlc.md), [GitHub Actions hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions) | D-012, D-034 |
 | Accessibility | [UI/UX notes](ui-ux.md), [WCAG 2.2](https://www.w3.org/TR/WCAG22/), [HIG accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility), [A11y Project checklist](https://www.a11yproject.com/checklist/) | D-023, D-024 |
 | Performance | [UI/UX notes](ui-ux.md), [web.dev INP](https://web.dev/articles/inp), [Lighthouse](https://developer.chrome.com/docs/lighthouse/overview) | D-020, D-024 |
 | Documentation or the reference library | [Reference library](README.md), [AGENTS.md](../../AGENTS.md) | D-026 |
@@ -37,6 +39,7 @@ If a source and the design contract disagree:
 Issue: #<number>
 Decision: D-0xx
 Risk: low | medium | high
+Control(s): SEC-xx
 References:
 - <source title> — <URL or local path>
 - <source title> — <URL or local path>

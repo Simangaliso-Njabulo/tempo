@@ -1,0 +1,83 @@
+.heading h3 {
+  margin: 0 0 var(--tempo-space-1);
+  font-size: var(--tempo-font-size-title);
+}
+
+.heading p {
+  margin: 0;
+  color: var(--tempo-color-text-secondary);
+}
+
+.badge {
+  display: inline-block;
+  margin-top: var(--tempo-space-1);
+  color: var(--tempo-color-carry);
+  font-size: var(--tempo-font-size-caption);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tempo-space-2);
+  margin: var(--tempo-space-4) 0;
+}
+
+.actions button,
+.chips button,
+.quiet {
+  min-height: var(--tempo-hit-target);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: transparent;
+  color: inherit;
+  padding: 0 var(--tempo-space-3);
+  font: inherit;
+}
+
+.primary {
+  background: var(--tempo-color-accent-fill) !important;
+  color: #fff;
+  border-color: transparent !important;
+  font-weight: var(--tempo-font-weight-semibold);
+}
+
+.section {
+  margin-top: var(--tempo-space-4);
+}
+
+.section h4 {
+  margin: 0 0 var(--tempo-space-2);
+  font-size: var(--tempo-font-size-body);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tempo-space-2);
+}
+
+.selected {
+  border-color: var(--tempo-color-accent-text) !important;
+  color: var(--tempo-color-accent-text);
+  background: var(--tempo-color-surface-2);
+}
+
+.moveRow label {
+  display: grid;
+  gap: var(--tempo-space-1);
+  color: var(--tempo-color-text-secondary);
+}
+
+.moveRow input {
+  min-height: var(--tempo-hit-target);
+  border: 1px solid var(--tempo-color-line);
+  border-radius: var(--tempo-radius-md);
+  background: var(--tempo-color-surface-2);
+  color: var(--tempo-color-text-primary);
+  padding: 0 var(--tempo-space-3);
+  font: inherit;
+}
+
+.quiet {
+  color: var(--tempo-color-text-secondary);
+}

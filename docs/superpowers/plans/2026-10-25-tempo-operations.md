@@ -27,13 +27,22 @@
 - The loop runs from a Windows scheduled task with a local `PAUSE` switch and a local lock/state directory excluded from Git.
 - The loop uses a fine-grained GitHub token in the user environment, never in the repository.
 - The license is a human decision. This plan recommends MIT but does not accept it on the human's behalf.
+- **Security:** D-032–D-035 apply to every task. The required checks are `lint`, `typecheck`, `unit`, `e2e`, `a11y`, `build`, `size`, `visual`, `lighthouse`, `security-static`, `security-supply-chain`, `security-workflows`, `security-secrets`, and `security-policy`.
+- **Pinning:** every GitHub Action is pinned to a full 40-character commit SHA with a version comment. Tags and branches are forbidden.
+- **Merge boundary:** only `risk:low` product/docs work may auto-merge. Security, dependency, workflow, storage, permission, migration, and release changes need a human review and a human merge.
+- **Model ladder:** try free models in descending capability for this codebase: `opencode/deepseek-v4.1-flash-free`, `opencode/glm-5.3-flash-free`, `opencode/mimo-v2.6-flash-free`, `opencode/flint-40b-free`, then `ollama/qwen2.5-coder:7b` if it is installed. On a quota, rate-limit, timeout, crash, or empty diff, try the next model once. Never retry the same model in the same run, never fall back to a paid model, and never exceed five attempts.
+- **Trigger:** the Windows scheduled task is the only unattended trigger. Manual runs use `-Manual`. No GitHub event, webhook, `pull_request_target`, or chat message may start an unattended run.
 
 ## File map
 
 ```text
 .github/
+  CODEOWNERS
+  dependabot.yml
   workflows/
     ci.yml
+    security.yml
+    drift-audit.yml
     deploy.yml
     visual-baselines.yml
   ISSUE_TEMPLATE/
@@ -41,10 +50,15 @@
     loop-approved.yml
     loop-proposed.yml
   pull_request_template.md
+security/
+  policy.json
 scripts/
+  security/
+    check-policy.mjs
   ops/
     configure-repo.ps1
     configure-branch-protection.ps1
+    verify-security-settings.ps1
     create-labels.ps1
     enable-pages.ps1
     release-check.ps1
@@ -206,7 +220,12 @@ Squash merge keeps `main` linear. Auto-merge is required for the low-risk loop, 
 - Branch deletion: on merge
 - Direct pushes to `main`: forbidden after protection is enabled
 - Force pushes: forbidden
-- Dependabot: off; dependencies are human-reviewed
+- Dependabot: enabled for npm and GitHub Actions, grouped, reviewed by a human
+- Secret scanning: enabled with push protection
+- Private vulnerability reporting: enabled
+- CodeQL: enabled for JavaScript/TypeScript with security-extended queries
+- CODEOWNERS: required review from the maintainer for protected paths
+- Required checks: the fourteen checks enforced by `.github/workflows/ci.yml` and `.github/workflows/security.yml`
 - Loop token: fine-grained, least privilege, stored outside the repository
 ```
 
@@ -243,7 +262,11 @@ $labels = @(
   @{ Name = 'loop:blocked'; Color = 'B60205'; Description = 'The loop is blocked or its circuit breaker is open' },
   @{ Name = 'risk:low'; Color = 'C2E0C6'; Description = 'Eligible for auto-merge on green CI' },
   @{ Name = 'risk:medium'; Color = 'FEF2C0'; Description = 'Human review required' },
-  @{ Name = 'risk:high'; Color = 'F9D0C4'; Description = 'Human review always; no auto-merge' }
+  @{ Name = 'risk:high'; Color = 'F9D0C4'; Description = 'Human review always; no auto-merge' },
+  @{ Name = 'security:drift'; Color = 'D93F0B'; Description = 'Security posture drifted from policy; loop paused' },
+  @{ Name = 'loop:paused'; Color = 'B60205'; Description = 'Stop the loop until a human clears this' },
+  @{ Name = 'dependencies'; Color = '0366D6'; Description = 'Dependency or supply-chain change' },
+  @{ Name = 'security'; Color = 'D93F0B'; Description = 'Security-sensitive change' }
 )
 
 foreach ($label in $labels) {
@@ -436,6 +459,11 @@ Closes #
 - [ ] No secrets, tokens, personal data, analytics, backend, sync, push, or paid service were added.
 - [ ] Tests were not deleted, skipped, or weakened.
 - [ ] The design contract, decision log, and reference library are still true or were updated.
+- [ ] Security controls touched are named.
+- [ ] The risk label is correct; security, dependency, workflow, storage, permission, and release changes are marked `risk:high`.
+- [ ] The abuse case for this change is tested, or an attestation is linked.
+- [ ] No third-party runtime origin, remote font, CDN, tracking pixel, dynamic HTML, `eval`, or `new Function` was added.
+- [ ] No waiver was created or extended by an agent.
 ```
 
 - [ ] **Step 4: Commit**
@@ -472,7 +500,12 @@ $requiredChecks = @(
   'build',
   'size',
   'visual',
-  'lighthouse'
+  'lighthouse',
+  'security-static',
+  'security-supply-chain',
+  'security-workflows',
+  'security-secrets',
+  'security-policy'
 )
 
 $body = @{
@@ -496,7 +529,9 @@ Write-Host 'main is protected. Required checks:'
 $requiredChecks | ForEach-Object { Write-Host " - $_" }
 ```
 
-The repository is a solo-maintainer project, so pull-request approvals are not required at the GitHub level. Human review is enforced by risk labels and by the loop's refusal to auto-merge anything above `risk:low`. A human still reviews and merges every medium/high PR.
+The repository is a solo-maintainer project, so pull-request approvals are not required at the GitHub level. `CODEOWNERS` still records the protected paths and will enforce review when a second maintainer exists. For v1, the human merge boundary is enforced by the risk label, the auto-merge boundary, and `security-policy`; the residual risk is recorded in `docs/security/threat-model.md`. A human reviews and merges every medium/high PR.
+
+**Timing:** do not run this script until Task 1.1, Task 1.3, and Task 1.4 have landed the CI and security workflows. A required check that does not exist yet blocks every PR, including the PR that creates it. The first workflow push is a human bootstrap action before protection is enabled.
 
 Run:
 
@@ -504,7 +539,7 @@ Run:
 powershell -ExecutionPolicy Bypass -File scripts/ops/configure-branch-protection.ps1 -Owner <owner> -Repo tempo
 ```
 
-Expected: `main` rejects direct pushes, force pushes, and deletion; required checks are the nine jobs in `.github/workflows/ci.yml`.
+Expected: `main` rejects direct pushes, force pushes, and deletion; required checks are the fourteen jobs in `.github/workflows/ci.yml` and `.github/workflows/security.yml`.
 
 - [ ] **Step 2: Enable Pages from GitHub Actions**
 
@@ -539,17 +574,24 @@ Run it after the deploy workflow exists. If the repository is private, Pages ava
 
 `main` is protected. A pull request is ready only when these required checks pass:
 
-1. `lint`
-2. `typecheck`
-3. `unit` (Vitest coverage thresholds)
-4. `e2e` (Playwright WebKit iPhone)
-5. `a11y` (axe, zero serious or critical)
-6. `build` (production build and PWA artifact check)
-7. `size` (JS/CSS/font budgets)
-8. `visual` (dark/light screenshot regression)
-9. `lighthouse` (mobile Performance ≥95, Accessibility 100, Best Practices 100)
+1. `lint` — style, boundaries, and unsafe-pattern rules
+2. `typecheck` — TypeScript
+3. `unit` — Vitest coverage thresholds
+4. `e2e` — Playwright WebKit iPhone
+5. `a11y` — axe, zero serious or critical
+6. `build` — production build and PWA artifact check
+7. `size` — JS/CSS/font budgets
+8. `visual` — dark/light screenshot regression
+9. `lighthouse` — mobile Performance ≥95, Accessibility 100, Best Practices 100
+10. `security-static` — CodeQL security-extended, no high/critical finding
+11. `security-supply-chain` — dependency review, `npm audit`, OSV-Scanner, SBOM
+12. `security-workflows` — `actionlint`, `zizmor`, full-SHA pins, least privilege
+13. `security-secrets` — Gitleaks and GitHub secret scanning
+14. `security-policy` — CSP, protected paths, risk label, waivers, required evidence
 
-A red PR is not merged. A human override is allowed only for an infrastructure emergency and must be recorded in the PR. The loop may never override a check.
+A red PR is not merged. There is no merge-anyway button for a security check. An infrastructure emergency needs a recorded human override and a retrospective; the loop may never override a check.
+
+Required checks are not claims. They are active only after the workflow exists and has run on a PR. Until then, say they are planned.
 ```
 
 - [ ] **Step 4: Commit**
@@ -592,8 +634,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -605,8 +647,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -618,14 +660,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: coverage
@@ -637,19 +679,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps webkit
       - run: npm run test:e2e -- --project=webkit-iphone
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-e2e
@@ -663,19 +705,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps webkit
       - run: npm run test:a11y -- --project=webkit-iphone
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-a11y
@@ -689,8 +731,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -703,8 +745,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -717,19 +759,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps webkit
       - run: npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-visual
@@ -743,8 +785,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -835,6 +877,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  attestations: write
 
 concurrency:
   group: pages
@@ -848,11 +891,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -864,15 +907,26 @@ jobs:
           VITE_BASE: /${{ github.event.repository.name }}/
 
       - run: npm run check:pwa
+      - run: npm run security:sbom
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: dist/**
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          if-no-files-found: error
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: dist
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
 
       - name: Smoke-test the deployed shell
         run: |
@@ -908,6 +962,581 @@ gh pr create --base main --head ops/deploy --title "Deploy GitHub Pages after gr
 ```
 
 Merge only after CI passes. The first deploy is the proof that the project-path base works.
+
+## Milestone 1A — Security checks
+
+### Task 1.3: Add the security scanning workflows
+
+**Files:**
+- Create: `.github/workflows/security.yml`
+- Create: `.github/dependabot.yml`
+- Modify: `package.json` (security scripts and SBOM tool)
+
+This task creates four of the five required security checks. Task 1.4 adds `security-policy`. Do not configure branch protection until both tasks are green on a PR.
+
+- [ ] **Step 1: Add the security workflow**
+
+`.github/workflows/security.yml`:
+
+```yaml
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  pull-requests: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-static:
+    name: security-static
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: github/codeql-action/init@2a2dd30f8030072d379eb0c9ea51789aa2ea9ca4 # v3.29.5
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - uses: github/codeql-action/analyze@2a2dd30f8030072d379eb0c9ea51789aa2ea9ca4 # v3.29.5
+
+  security-supply-chain:
+    name: security-supply-chain
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - uses: actions/dependency-review-action@da24556b548a50705dd671f47852072ea4c105d9 # v4.7.1
+        if: github.event_name == 'pull_request'
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always
+          license-check: true
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
+      - name: Install OSV-Scanner
+        run: go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.0
+      - run: osv-scanner scan --lockfile=package-lock.json
+      - run: npm run security:sbom
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          if-no-files-found: error
+
+  security-workflows:
+    name: security-workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
+        with:
+          go-version: '1.24'
+          cache: false
+      - run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+      - run: python3 -m pip install --user 'zizmor==1.15.0'
+      - run: actionlint
+      - run: python3 -m zizmor .github/workflows
+
+  security-secrets:
+    name: security-secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+The `security-supply-chain` job fails on a high vulnerability, a disallowed license, a lockfile mismatch, or a SBOM failure. The `security-workflows` job fails on an unpinned action, a shell-injection pattern, excessive permissions, or an unsafe trigger. The `security-secrets` job fails on a secret in the PR commits or history.
+
+- [ ] **Step 2: Add the security scripts**
+
+Add to `package.json`:
+
+```json
+"security:sbom": "cyclonedx-npm --output-file sbom.cdx.json",
+"verify:security": "npm run security:policy && npm run security:deps && npm run security:workflows && npm run security:secrets",
+"security:deps": "npm audit --audit-level=high",
+"security:workflows": "actionlint",
+"security:secrets": "gitleaks detect --source . --redact --no-banner"
+```
+
+Install the SBOM tool as a dev dependency:
+
+```powershell
+npm install -D @cyclonedx/cyclonedx-npm
+```
+
+`actionlint` and `gitleaks` are local tools. If they are not installed on the developer machine, say so and rely on the required check. Do not silently skip them.
+
+- [ ] **Step 3: Add Dependabot**
+
+`.github/dependabot.yml`:
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+      time: '04:17'
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+      production-dependencies:
+        dependency-type: production
+    labels:
+      - dependencies
+      - risk:high
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - security
+      - risk:high
+```
+
+Dependabot PRs never auto-merge. They are `risk:high` because they change the supply chain. A human reviews the diff, the release notes, and the green security checks.
+
+- [ ] **Step 4: Verify the workflow locally**
+
+```powershell
+npm ci
+npm audit --audit-level=high
+npm run security:sbom
+git diff --exit-code package-lock.json
+```
+
+`actionlint` and `gitleaks` run in CI. If the local binaries exist, also run `actionlint` and `gitleaks detect --source . --redact --no-banner`.
+
+- [ ] **Step 5: Commit and open a PR**
+
+```powershell
+git switch -c ops/security-scanning
+git add .github/workflows/security.yml .github/dependabot.yml package.json package-lock.json docs/reference/stack.md docs/security/verification.md
+git commit -m "ci: add required security scanning"
+git push -u origin ops/security-scanning
+gh pr create --base main --head ops/security-scanning --title "Add required security scanning" --body "Adds CodeQL, supply-chain, workflow, and secret checks. Risk: high. Controls: SEC-07 to SEC-11, SEC-26. No auto-merge."
+```
+
+A human merges this PR after the checks are green. It is a security change and never auto-merges.
+
+### Task 1.4: Add policy-as-code and CODEOWNERS
+
+**Files:**
+- Create: `security/policy.json`
+- Create: `scripts/security/check-policy.mjs`
+- Create: `.github/CODEOWNERS`
+- Modify: `.github/workflows/security.yml`
+- Modify: `package.json`
+- Create: `docs/security/asvs.md` (assessment template; filled by a human)
+
+`security-policy` is the check that makes the written rules executable. It runs on every PR after the build, so it can inspect the real artifact. It fails closed if the policy file is missing, malformed, or out of date.
+
+- [ ] **Step 1: Add the policy**
+
+`security/policy.json`:
+
+```json
+{
+  "version": 1,
+  "requiredChecks": [
+    "lint", "typecheck", "unit", "e2e", "a11y", "build", "size", "visual", "lighthouse",
+    "security-static", "security-supply-chain", "security-workflows", "security-secrets", "security-policy"
+  ],
+  "protectedPaths": [
+    "^\\.github/",
+    "^security/",
+    "^\\.github/CODEOWNERS$",
+    "^AGENTS\\.md$",
+    "^docs/security/",
+    "^docs/reference/security\\.md$",
+    "^docs/reference/ai-development\\.md$",
+    "^scripts/loop/",
+    "^scripts/ops/",
+    "^package\\.json$",
+    "^package-lock\\.json$",
+    "^vite\\.config\\.",
+    "^index\\.html$",
+    "^public/manifest\\.webmanifest$",
+    "^src/infrastructure/export/",
+    "^src/infrastructure/db/"
+  ],
+  "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+  "waiverDays": { "high": 30, "medium": 90 },
+  "attestationDays": 90,
+  "limits": { "changedLines": 400, "changedFiles": 12 }
+}
+```
+
+- [ ] **Step 2: Add the checker**
+
+`scripts/security/check-policy.mjs`:
+
+```js
+import { execFileSync } from 'node:child_process';
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const root = process.cwd();
+const errors = [];
+const fail = (message) => errors.push(message);
+
+async function readJson(file) {
+  return JSON.parse(await readFile(path.join(root, file), 'utf8'));
+}
+
+async function walk(dir) {
+  const entries = await readdir(path.join(root, dir), { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const relative = path.posix.join(dir, entry.name);
+    if (entry.isDirectory()) files.push(...await walk(relative));
+    else files.push(relative);
+  }
+  return files;
+}
+
+const policy = await readJson('security/policy.json').catch(() => {
+  console.error('security-policy: security/policy.json is missing or invalid.');
+  process.exit(1);
+});
+
+for (const key of ['version', 'requiredChecks', 'protectedPaths', 'csp', 'waiverDays', 'attestationDays', 'limits']) {
+  if (!(key in policy)) fail(`policy is missing ${key}.`);
+}
+if (policy.version !== 1) fail('policy version must be 1.');
+if (!Array.isArray(policy.requiredChecks) || policy.requiredChecks.length < 14) fail('requiredChecks is incomplete.');
+
+const html = await readFile(path.join(root, 'dist/index.html'), 'utf8').catch(() => {
+  fail('dist/index.html is missing; run npm run build first.');
+  return '';
+});
+const meta = html.match(/<meta\s+http-equiv=["']Content-Security-Policy["']\s+content=["']([^"']+)["']/i);
+if (!meta) fail('the production CSP meta tag is missing.');
+else if (meta[1] !== policy.csp) fail('the production CSP does not match security/policy.json.');
+if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(html)) fail('index.html contains an inline script.');
+if (/<style\b/i.test(html)) fail('index.html contains an inline style block.');
+if (/on[a-z]+\s*=\s*["']/i.test(html)) fail('index.html contains an inline event handler.');
+
+const workflowFiles = await walk('.github/workflows').catch(() => []);
+for (const file of workflowFiles.filter((item) => item.endsWith('.yml') || item.endsWith('.yaml'))) {
+  const text = await readFile(path.join(root, file), 'utf8');
+  if (/pull_request_target\s*:/.test(text)) fail(`${file} uses pull_request_target.`);
+  if (/secrets\s*:\s*inherit/.test(text)) fail(`${file} uses secrets: inherit.`);
+  for (const match of text.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
+    const uses = match[1];
+    if (uses.startsWith('./')) continue;
+    if (!/@[0-9a-f]{40}$/.test(uses)) fail(`${file} has an unpinned action: ${uses}`);
+  }
+  if (!/^permissions\s*:/m.test(text)) fail(`${file} has no top-level permissions block.`);
+}
+
+const sourceFiles = await walk('src').catch(() => []);
+const forbidden = [
+  [/dangerouslySetInnerHTML/, 'dynamic HTML'],
+  [/\beval\s*\(/, 'eval'],
+  [/\bnew\s+Function\s*\(/, 'new Function'],
+  [/\.innerHTML\s*=/, 'innerHTML assignment'],
+  [/document\.write\s*\(/, 'document.write'],
+  [/fetch\s*\(\s*['"`]https?:/, 'third-party fetch'],
+];
+for (const file of sourceFiles.filter((item) => /\.(ts|tsx|js|jsx)$/.test(item))) {
+  const text = await readFile(path.join(root, file), 'utf8');
+  for (const [pattern, label] of forbidden) {
+    if (pattern.test(text)) fail(`${file} contains ${label}.`);
+  }
+}
+
+const secretPatterns = [/ghp_[A-Za-z0-9]{20,}/, /github_pat_[A-Za-z0-9_]{20,}/, /sk-[A-Za-z0-9]{20,}/, /BEGIN (RSA|OPENSSH|EC) PRIVATE KEY/];
+for (const file of [...sourceFiles, ...workflowFiles]) {
+  const text = await readFile(path.join(root, file), 'utf8');
+  for (const pattern of secretPatterns) if (pattern.test(text)) fail(`${file} looks like it contains a secret.`);
+}
+
+async function checkExpiringDir(dir, kind) {
+  const files = await readdir(path.join(root, dir)).catch(() => []);
+  for (const file of files.filter((item) => item.endsWith('.json'))) {
+    const record = await readJson(path.join(dir, file)).catch(() => null);
+    if (!record) {
+      fail(`${dir}/${file} is not valid JSON.`);
+      continue;
+    }
+    for (const key of ['control', 'owner', 'approver', 'expires', 'evidence']) {
+      if (!record[key]) fail(`${dir}/${file} is missing ${key}.`);
+    }
+    if (!Array.isArray(record.evidence) || record.evidence.length === 0) {
+      fail(`${dir}/${file} needs at least one evidence entry.`);
+    }
+    if (record.severity === 'critical') fail(`${dir}/${file} tries to waive a critical finding.`);
+    if (kind === 'waiver' && !['high', 'medium'].includes(record.severity)) {
+      fail(`${dir}/${file} has an invalid severity.`);
+    }
+    const limit = kind === 'waiver' ? policy.waiverDays[record.severity] : policy.attestationDays;
+    const started = Date.parse(record.attestedAt ?? record.approvedAt);
+    const expires = Date.parse(record.expires);
+    const remaining = (expires - Date.now()) / 86_400_000;
+    const window = (expires - started) / 86_400_000;
+    if (!Number.isFinite(remaining) || remaining < 0) fail(`${dir}/${file} is expired.`);
+    if (!Number.isFinite(window) || window > limit) fail(`${dir}/${file} exceeds the ${kind} limit of ${limit} days.`);
+  }
+}
+await checkExpiringDir('security/waivers', 'waiver');
+await checkExpiringDir('security/attestations', 'attestation');
+
+if (process.env.GITHUB_EVENT_NAME === 'pull_request' && process.env.GITHUB_EVENT_PATH) {
+  const event = JSON.parse(await readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
+  const labels = new Set((event.pull_request?.labels ?? []).map((label) => label.name));
+  const body = event.pull_request?.body ?? '';
+  for (const heading of ['## Issue', '## Risk', '## Decision IDs and references', '## Verification', '## Not verified', '## Data or migration impact']) {
+    if (!body.includes(heading)) fail(`the PR body is missing ${heading}.`);
+  }
+  const changed = execFileSync('git', ['diff', '--name-only', `origin/${event.pull_request.base.ref}...HEAD`], { encoding: 'utf8' })
+    .split('\n').filter(Boolean);
+  const protectedFiles = changed.filter((file) => policy.protectedPaths.some((pattern) => new RegExp(pattern).test(file)));
+  if (protectedFiles.length > 0 && !labels.has('risk:high')) fail(`protected paths need risk:high: ${protectedFiles.join(', ')}`);
+}
+
+if (errors.length > 0) {
+  for (const error of errors) console.error(`security-policy: ${error}`);
+  process.exit(1);
+}
+console.log('security-policy: policy, CSP, pins, secrets, waivers, attestations, and PR evidence are valid.');
+```
+
+- [ ] **Step 3: Wire the policy job**
+
+Add `security-policy` to `.github/workflows/security.yml`:
+
+```yaml
+  security-policy:
+    name: security-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/security/check-policy.mjs
+```
+
+Add `"security:policy": "node scripts/security/check-policy.mjs"` to `package.json`.
+
+- [ ] **Step 4: Add CODEOWNERS**
+
+`.github/CODEOWNERS`:
+
+```text
+* @Simangaliso-Njabulo
+/.github/ @Simangaliso-Njabulo
+/security/ @Simangaliso-Njabulo
+/AGENTS.md @Simangaliso-Njabulo
+/docs/security/ @Simangaliso-Njabulo
+/docs/reference/security.md @Simangaliso-Njabulo
+/docs/reference/ai-development.md @Simangaliso-Njabulo
+/scripts/loop/ @Simangaliso-Njabulo
+/scripts/ops/ @Simangaliso-Njabulo
+/package.json @Simangaliso-Njabulo
+/package-lock.json @Simangaliso-Njabulo
+/vite.config.ts @Simangaliso-Njabulo
+/index.html @Simangaliso-Njabulo
+/public/manifest.webmanifest @Simangaliso-Njabulo
+/src/infrastructure/export/ @Simangaliso-Njabulo
+/src/infrastructure/db/ @Simangaliso-Njabulo
+```
+
+GitHub cannot require a solo maintainer to approve their own PR. CODEOWNERS is a durable record and becomes enforcing when a second maintainer exists; the v1 human-merge boundary is the risk label plus the loop's refusal to auto-merge.
+
+- [ ] **Step 5: Add the ASVS assessment stub**
+
+`docs/security/asvs.md` starts as a table with one row per ASVS 5.0 Level 2 chapter, `Status: not assessed`, and a `Justification` column. A human fills it before the public release. The checker does not treat a stub as an assessment; the release gate does.
+
+- [ ] **Step 6: Run and commit**
+
+```powershell
+npm run build
+npm run security:policy
+git add security/policy.json scripts/security/check-policy.mjs .github/CODEOWNERS .github/workflows/security.yml package.json docs/security/asvs.md
+git commit -m "security: add policy-as-code, CODEOWNERS, and CSP inspection"
+```
+
+Open a PR. `security-policy` must be green before branch protection requires it.
+
+### Task 1.5: Verify repository settings and add drift detection
+
+**Files:**
+- Create: `scripts/ops/verify-security-settings.ps1`
+- Create: `.github/workflows/drift-audit.yml`
+- Modify: `scripts/ops/configure-repo.ps1`
+- Modify: `docs/operations/ci.md`
+
+- [ ] **Step 1: Enable the repository security features**
+
+Add to `scripts/ops/configure-repo.ps1`, after the merge configuration:
+
+```powershell
+gh api -X PATCH "repos/$Owner/$Repo" `
+  -f security_and_analysis[secret_scanning][status]=enabled `
+  -f security_and_analysis[secret_scanning_push_protection][status]=enabled
+if ($LASTEXITCODE -ne 0) { throw 'Could not enable secret scanning and push protection.' }
+
+gh api -X PUT "repos/$Owner/$Repo/private-vulnerability-reporting"
+if ($LASTEXITCODE -ne 0) { throw 'Could not enable private vulnerability reporting.' }
+```
+
+These settings are only available when the repository plan allows them. If the API says they are unavailable, stop and record an attestation with the exact limitation; do not pretend they are enabled.
+
+- [ ] **Step 2: Add the settings verifier**
+
+`scripts/ops/verify-security-settings.ps1` reads `security/policy.json`, then verifies with `gh api`:
+
+- `main` protection requires every check in `requiredChecks`.
+- Force pushes and deletions are disabled.
+- Admin enforcement is on.
+- Secret scanning and push protection are enabled.
+- Dependabot alerts and security updates are enabled.
+- Private vulnerability reporting is enabled.
+- The default workflow token is read-only.
+- Actions are restricted to GitHub-owned and verified creators.
+- The loop token is not a repository secret and is not in the environment of a workflow.
+
+Exit non-zero and print the exact missing setting. The script does not print a token.
+
+- [ ] **Step 3: Add the drift audit**
+
+`.github/workflows/drift-audit.yml` runs daily and on `workflow_dispatch`:
+
+```yaml
+name: Security drift audit
+
+on:
+  schedule:
+    - cron: '41 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  security-events: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/security/check-policy.mjs
+      - name: Check repository settings
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/ops/verify-security-settings.ps1 -Owner ${{ github.repository_owner }} -Repo ${{ github.event.repository.name }}
+      - name: Open a drift issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "security: drift detected $(date -u +%Y-%m-%d)" \
+            --label "security:drift,loop:paused" \
+            --body "The scheduled security drift audit failed. Fix the missing setting or expired record, then close this issue. The loop must stay paused until it is closed. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+```
+
+`security:drift` and `loop:paused` labels are created by `scripts/ops/create-labels.ps1`. The issue is the human-visible circuit breaker; the loop also refuses to run while a `security:drift` issue is open.
+
+- [ ] **Step 4: Add OpenSSF Scorecard**
+
+Add a `scorecard` job to `.github/workflows/drift-audit.yml`:
+
+```yaml
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: ossf/scorecard-action@f2ea147fec3c2f0d459703eba7405b5e9bcd8c8f # v2.4.2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scorecard
+          path: results.sarif
+          if-no-files-found: error
+```
+
+Scorecard is a signal, not a vanity score. A failing check opens a review issue; it does not auto-merge anything.
+
+- [ ] **Step 5: Run the verifier and commit**
+
+```powershell
+npm run build
+npm run security:policy
+powershell -ExecutionPolicy Bypass -File scripts/ops/verify-security-settings.ps1 -Owner <owner> -Repo tempo
+git add scripts/ops/verify-security-settings.ps1 .github/workflows/drift-audit.yml scripts/ops/configure-repo.ps1 docs/operations/ci.md
+git commit -m "security: verify repository settings and detect drift"
+```
+
+Run this only after the repository exists and the token has the required read permissions. A failure is a real finding; do not weaken the verifier to make it pass.
 
 ## Milestone 2 — Visual regression
 
@@ -1066,15 +1695,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps webkit
       - run: npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: visual-baselines
           path: tests/e2e/visual.spec.ts-snapshots/
@@ -1154,7 +1783,10 @@ param(
   [switch]$DryRun
 )
 
-$ErrorActionPreference = 'Stop'
+# Windows PowerShell 5.1 turns native stderr (git progress, gh status) into an
+# error record. Keep cmdlet errors non-terminating and check $LASTEXITCODE
+# explicitly after every native command instead.
+$ErrorActionPreference = 'Continue'
 Set-StrictMode -Version Latest
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -1184,11 +1816,84 @@ function Invoke-Checked {
   if ($LASTEXITCODE -ne 0) { throw $Message }
 }
 
+function Get-State {
+  if (Test-Path $statePath) {
+    return Get-Content $statePath -Raw | ConvertFrom-Json
+  }
+  return [pscustomobject]@{ consecutiveFailures = 0; lastRunAt = $null; lastResult = $null }
+}
+
+function Save-State {
+  param($State)
+  $State | ConvertTo-Json | Set-Content -Path $statePath -Encoding utf8
+}
+
 function Reset-ModelChanges {
   # The run starts from a clean tree. Reset and remove untracked files so the
   # next model does not inherit a failed attempt. Ignored local state survives.
   Invoke-Checked { git reset --hard origin/main } 'Could not reset model changes.'
   Invoke-Checked { git clean -fd } 'Could not remove untracked model files.'
+}
+
+function Assert-Prerequisites {
+  if (-not $env:GH_TOKEN) { throw 'GH_TOKEN is not set for the loop user.' }
+  foreach ($command in @('git', 'gh', 'opencode', 'npm')) {
+    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "$command is not on PATH." }
+  }
+
+  $remotes = @(git remote)
+  if ($LASTEXITCODE -ne 0 -or $remotes -notcontains 'origin') {
+    throw 'No origin remote is configured. The loop cannot run until the repository is pushed.'
+  }
+
+  $null = gh auth status 2>&1
+  if ($LASTEXITCODE -ne 0) { throw 'gh is not authenticated for the loop user.' }
+}
+
+function Get-StringHash {
+  # Windows PowerShell 5.1 has no SHA256.HashData, so use the instance API.
+  param([string]$Text)
+  $sha = [Security.Cryptography.SHA256]::Create()
+  try {
+    return [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))
+  } finally {
+    $sha.Dispose()
+  }
+}
+
+function Test-CiGreen {
+  $json = gh run list --branch main --workflow CI --limit 1 --json conclusion
+  if ($LASTEXITCODE -ne 0) { return $false }
+  $runs = @($json | ConvertFrom-Json)
+  if ($runs.Count -eq 0) { return $false }
+  return $runs[0].conclusion -eq 'success'
+}
+
+function Test-DeployInProgress {
+  $json = gh run list --workflow Deploy --status in_progress --limit 1 --json databaseId
+  if ($LASTEXITCODE -ne 0) { return $false }
+  return @($json | ConvertFrom-Json).Count -gt 0
+}
+
+function Assert-IssueUnchanged {
+  param($Issue, [string]$ExpectedBodyHash, [string]$ExpectedRisk)
+
+  $json = gh issue view $Issue.number --json state,body,labels
+  if ($LASTEXITCODE -ne 0) { throw "Could not re-read issue #$($Issue.number)." }
+  $fresh = $json | ConvertFrom-Json
+
+  if ($fresh.state -ne 'OPEN') { throw "Issue #$($Issue.number) is no longer open." }
+
+  $labels = @($fresh.labels | ForEach-Object { $_.name })
+  if ($labels -notcontains 'loop:approved') { throw "Issue #$($Issue.number) lost the loop:approved label." }
+
+  $freshRisk = @($labels | Where-Object { $_ -like 'risk:*' })
+  if ($freshRisk.Count -ne 1 -or $freshRisk[0] -ne $ExpectedRisk) {
+    throw "Issue #$($Issue.number) changed its risk label during the run."
+  }
+
+  $actualHash = Get-StringHash -Text ([string]$fresh.body)
+  if ($actualHash -ne $ExpectedBodyHash) { throw "Issue #$($Issue.number) changed during the run." }
 }
 
 try {
@@ -1197,10 +1902,7 @@ try {
     exit 0
   }
 
-  if (-not $env:GH_TOKEN) { throw 'GH_TOKEN is not set for the loop user.' }
-  foreach ($command in @('git', 'gh', 'opencode', 'npm')) {
-    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "$command is not on PATH." }
-  }
+  Assert-Prerequisites
 
   if (Test-Path $lockPath) {
     $lock = Get-Content $lockPath -Raw | ConvertFrom-Json
@@ -1210,18 +1912,13 @@ try {
       Write-RunLog 'Another loop run holds the lock; exiting.'
       exit 0
     }
-    Remove-Item $lockPath -Force
+    Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
   }
 
   @{ pid = $PID; startedAt = (Get-Date).ToString('o') } |
     ConvertTo-Json | Set-Content -Path $lockPath -Encoding utf8
 
-  $state = if (Test-Path $statePath) {
-    Get-Content $statePath -Raw | ConvertFrom-Json
-  } else {
-    [pscustomobject]@{ consecutiveFailures = 0; lastRunAt = $null; lastResult = $null }
-  }
-
+  $state = Get-State
   if ([int]$state.consecutiveFailures -ge 3) {
     Write-RunLog 'Circuit breaker is open; a human must clear it.'
     exit 0
@@ -1232,26 +1929,28 @@ try {
   if ($status) { throw 'Working tree is dirty; refusing to run.' }
 
   Invoke-Checked { git fetch origin --prune } 'git fetch failed.'
+
   $currentBranch = git rev-parse --abbrev-ref HEAD
-  if ($currentBranch -ne 'main') { throw "Expected main, found $currentBranch." }
+  if ($LASTEXITCODE -ne 0 -or $currentBranch -ne 'main') { throw "Expected main, found $currentBranch." }
 
-  $behind = [int](git rev-list --count HEAD..origin/main)
-  if ($behind -gt 0) { throw 'main is behind origin/main.' }
+  $behind = git rev-list --count HEAD..origin/main
+  if ($LASTEXITCODE -ne 0) { throw 'Could not compare main with origin/main.' }
+  if ([int]$behind -gt 0) { throw 'main is behind origin/main.' }
 
-  $openPrs = [int](gh pr list --state open --label loop:pr --json number --jq 'length')
-  if ($openPrs -gt 0) {
+  $openPrJson = gh pr list --state open --label loop:pr --json number
+  if ($LASTEXITCODE -ne 0) { throw 'Could not list open loop pull requests.' }
+  if (@($openPrJson | ConvertFrom-Json).Count -gt 0) {
     Write-RunLog 'A loop PR is already open; exiting.'
     exit 0
   }
 
-  $mainRun = gh run list --branch main --workflow CI --limit 1 --json conclusion | ConvertFrom-Json
-  if ($mainRun.conclusion -ne 'success') { throw 'CI on main is not green.' }
+  if (-not (Test-CiGreen)) { throw 'CI on main is not green.' }
+  if (Test-DeployInProgress) { throw 'A deploy is in progress; refusing to run.' }
 
-  $deploys = gh run list --workflow Deploy --status in_progress --limit 1 --json databaseId | ConvertFrom-Json
-  if ($deploys) { throw 'A deploy is in progress; refusing to run.' }
-
-  $issues = gh issue list --state open --label loop:approved --limit 50 --json number,title,body,labels,url | ConvertFrom-Json
-  if (-not $issues) {
+  $issuesJson = gh issue list --state open --label loop:approved --limit 50 --json number,title,body,labels,url
+  if ($LASTEXITCODE -ne 0) { throw 'Could not list approved issues.' }
+  $issues = @($issuesJson | ConvertFrom-Json)
+  if ($issues.Count -eq 0) {
     Write-RunLog 'No approved issues; exiting.'
     exit 0
   }
@@ -1263,13 +1962,15 @@ try {
 
   if (-not $issue) { throw 'No approved issue has exactly one risk label.' }
 
-  $risk = ($issue.labels | Where-Object { $_.name -like 'risk:*' }).name
+  $risk = @($issue.labels | Where-Object { $_.name -like 'risk:*' })[0].name
   Write-RunLog "Selected issue #$($issue.number) [$risk] $($issue.title)"
 
   if ($DryRun) {
     Write-RunLog 'Dry run: no branch, model, or PR will be created.'
     exit 0
   }
+
+  $bodyHash = Get-StringHash -Text ([string]$issue.body)
 
   $slug = ($issue.title.ToLowerInvariant() -replace '[^a-z0-9]+', '-' -replace '^-|-$', '')
   if ([string]::IsNullOrWhiteSpace($slug)) { $slug = "issue-$($issue.number)" }
@@ -1352,15 +2053,20 @@ try {
   if ($files.Count -gt 12) { throw "Change touches $($files.Count) files; limit is 12." }
 
   $forbidden = @(
-    '^\.github/workflows/',
+    '^\.github/',
     '^scripts/loop/',
+    '^scripts/ops/',
+    '^security/',
     '^package\.json$',
     '^package-lock\.json$',
+    '^vite\.config\.',
     '^docs/design/decisions\.md$',
+    '^docs/security/',
+    '^docs/reference/security\.md$',
+    '^docs/reference/ai-development\.md$',
     '^docs/superpowers/specs/',
     '^docs/superpowers/plans/',
-    '^AGENTS\.md$',
-    '^\.github/dependabot\.yml$'
+    '^AGENTS\.md$'
   )
   $violations = @()
   foreach ($file in $files) {
@@ -1369,7 +2075,7 @@ try {
     }
   }
   if ($violations.Count -gt 0) {
-    throw "Protected path changed: $($violations -join ', ')"
+    throw "Protected path changed: $(@($violations | Sort-Object -Unique) -join ', ')"
   }
 
   $deleted = git diff --name-status origin/main |
@@ -1397,6 +2103,8 @@ try {
   Invoke-Checked { npm run test:e2e -- --project=webkit-iphone } 'End-to-end tests failed.'
   Invoke-Checked { npm run test:a11y -- --project=webkit-iphone } 'Accessibility tests failed.'
   Invoke-Checked { npm run test:visual -- --project=webkit-iphone } 'Visual regression failed.'
+
+  Assert-IssueUnchanged -Issue $issue -ExpectedBodyHash $bodyHash -ExpectedRisk $risk
 
   Invoke-Checked { git add -A } 'git add failed.'
   Invoke-Checked { git commit -m "$($issue.title) (#$($issue.number))" } 'git commit failed.'
@@ -1449,7 +2157,8 @@ Required for a visual change; see the issue.
     --head $branchName `
     --title "$($issue.title) (#$($issue.number))" `
     --body $prBody `
-    --label "loop:pr,$risk"
+    --label 'loop:pr' `
+    --label $risk
   if ($LASTEXITCODE -ne 0) { throw 'Could not open the pull request.' }
 
   $prNumber = [int](gh pr view $prUrl --json number --jq '.number')
@@ -1466,25 +2175,25 @@ Required for a visual change; see the issue.
     Write-RunLog 'Human review required; auto-merge not enabled.'
   }
 
-  gh issue comment $issue.number --body "The loop opened $prUrl using ``$modelUsed``. Risk: ``$risk``. $(if ($Manual) { 'Manual run; auto-merge is disabled.' } else { 'Auto-merge is enabled only for risk:low on green CI.' })"
+  $mode = if ($Manual) { 'Manual run; auto-merge is disabled.' } else { 'Auto-merge is enabled only for risk:low on green CI.' }
+  gh issue comment $issue.number --body "The loop opened $prUrl using ``$modelUsed``. Risk: ``$risk``. $mode"
+  if ($LASTEXITCODE -ne 0) { Write-RunLog 'The PR opened, but the issue comment failed.' }
 
   $state.consecutiveFailures = 0
   $state.lastRunAt = (Get-Date).ToString('o')
   $state.lastResult = 'pr-opened'
-  $state | ConvertTo-Json | Set-Content -Path $statePath -Encoding utf8
+  Save-State $state
   exit 0
 }
 catch {
   $message = $_.Exception.Message
   Write-RunLog "FAILED: $message"
 
-  $state = if (Test-Path $statePath) { Get-Content $statePath -Raw | ConvertFrom-Json } else {
-    [pscustomobject]@{ consecutiveFailures = 0; lastRunAt = $null; lastResult = $null }
-  }
+  $state = Get-State
   $state.consecutiveFailures = [int]$state.consecutiveFailures + 1
   $state.lastRunAt = (Get-Date).ToString('o')
   $state.lastResult = 'failed'
-  $state | ConvertTo-Json | Set-Content -Path $statePath -Encoding utf8
+  Save-State $state
 
   if ($startedBranch -and $branchName) {
     try {
@@ -1536,9 +2245,38 @@ The `PAUSE` switch is local and untracked. A human creates it to stop the loop a
 
 The loop is a maintainer tool. It is not shipped to users.
 
+## Status
+
+The runner and installer exist, but the scheduled task is **not active**. Activation requires a pushed repository, `GH_TOKEN`, green CI, the security checks, and branch protection. Until then the runner exits with an error and schedules nothing.
+
+## Preflight
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/install-scheduled-task.ps1
+```
+
+This checks the remote, `GH_TOKEN`, `gh`, and `opencode`. It never schedules anything.
+
+## Activate
+
+Only after the repository is pushed and `main` is green:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/install-scheduled-task.ps1 -Activate
+```
+
+The task runs at 08:00, 11:00, 14:00, 17:00, and 20:00 local time as the current user. A dedicated low-privilege Windows user is a human setup step; see `docs/security/agent-threat-model.md`.
+
 ## Pause
 
 Create `PAUSE` at the repository root. The next run exits without work. Delete it to resume.
+
+```powershell
+New-Item -ItemType File -Path PAUSE
+Remove-Item PAUSE
+```
+
+The circuit breaker also writes `PAUSE` after three consecutive failures.
 
 ## Circuit breaker
 
@@ -1558,9 +2296,23 @@ A manual run opens a PR but never auto-merges.
 powershell -ExecutionPolicy Bypass -File scripts/loop/run.ps1 -DryRun
 ```
 
+A dry run selects and prints the issue, then exits without a branch, model call, or PR.
+
+## Model ladder
+
+The runner tries free models in descending capability:
+
+1. `opencode/deepseek-v4.1-flash-free`
+2. `opencode/glm-5.3-flash-free`
+3. `opencode/mimo-v2.6-flash-free`
+4. `opencode/flint-40b-free`
+5. `ollama/qwen2.5-coder:7b`, only if Ollama is installed
+
+On a quota, rate limit, timeout, crash, or empty diff, it resets the working tree and tries the next model once. It never retries the same model in a run, never uses a paid fallback, and stops after five attempts.
+
 ## What the loop may touch
 
-Only the issue. It may not touch workflows, loop scripts, branch protection, release configuration, dependencies, the spec, the plans, or `AGENTS.md`. It may not delete or weaken tests.
+Only the issue. It may not touch workflows, loop scripts, security policy, branch protection, release configuration, dependencies, the spec, the plans, or `AGENTS.md`. It may not delete or weaken tests. The runner checks the changed files, the line count, the deleted tests, and the issue body after the model runs.
 
 ## Logs
 
@@ -1600,11 +2352,52 @@ git commit -m "feat: add guarded low-risk loop runner"
 `scripts/loop/install-scheduled-task.ps1`:
 
 ```powershell
+[CmdletBinding()]
+param(
+  [switch]$Activate
+)
+
 $ErrorActionPreference = 'Stop'
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $runner = Join-Path $root 'scripts\loop\run.ps1'
 if (-not (Test-Path $runner)) { throw "Runner not found: $runner" }
+
+$problems = @()
+
+$remotes = @(git -C $root remote)
+if ($LASTEXITCODE -ne 0 -or $remotes -notcontains 'origin') {
+  $problems += 'No origin remote. Push the repository before activating the loop.'
+}
+
+if (-not $env:GH_TOKEN) {
+  $problems += 'GH_TOKEN is not set for this user. Create a fine-grained token outside the repository.'
+} else {
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  $null = gh auth status 2>&1
+  $authExit = $LASTEXITCODE
+  $ErrorActionPreference = $previous
+  if ($authExit -ne 0) { $problems += 'gh is not authenticated. Run gh auth login or set GH_TOKEN correctly.' }
+}
+
+if (-not (Get-Command opencode -ErrorAction SilentlyContinue)) {
+  $problems += 'opencode is not on PATH.'
+}
+
+if ($problems.Count -gt 0) {
+  Write-Host 'The loop is not ready to activate:'
+  foreach ($problem in $problems) { Write-Host "  - $problem" }
+  if ($Activate) { throw 'Fix the problems above, then run the installer again.' }
+  Write-Host 'Preflight finished. Nothing was scheduled.'
+  exit 0
+}
+
+if (-not $Activate) {
+  Write-Host 'Preflight passed. Nothing was scheduled.'
+  Write-Host 'Re-run with -Activate only after CI, the security checks, and branch protection are green on main.'
+  exit 0
+}
 
 $argument = "-NoProfile -ExecutionPolicy Bypass -File `"$runner`""
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argument -WorkingDirectory $root
@@ -1628,7 +2421,8 @@ Register-ScheduledTask `
   -Force
 
 Write-Host 'Scheduled task installed: TEMPO low-risk loop'
-Write-Host 'Set GH_TOKEN in the loop user environment before the first run.'
+Write-Host 'Triggers at 08:00, 11:00, 14:00, 17:00, and 20:00 local time.'
+Write-Host 'The task runs as the current user. A dedicated low-privilege user is a human setup step.'
 ```
 
 Run it once, then verify in Task Scheduler:
@@ -1647,7 +2441,7 @@ Expected: triggers at 08:00, 11:00, 14:00, 17:00, and 20:00 local time. The task
 # Loop operations
 
 - Scheduler: Windows Task Scheduler, `TEMPO low-risk loop`.
-- Cadence: every 3 hours, 08:00-22:00 local.
+- Cadence: every 3 hours inside the 08:00–22:00 window (08:00, 11:00, 14:00, 17:00, 20:00 local). A run that overruns is not restarted.
 - One issue per run; one open `loop:pr` at a time.
 - `PAUSE` is checked before every run.
 - A local lock prevents overlapping runs.
@@ -1657,6 +2451,42 @@ Expected: triggers at 08:00, 11:00, 14:00, 17:00, and 20:00 local time. The task
 - The circuit breaker opens after 3 consecutive failures and writes `PAUSE`.
 - The loop token is least-privilege and lives in the user environment, never in the repository.
 - The loop never edits workflows, loop scripts, branch protection, release configuration, dependencies, the spec, the plans, or `AGENTS.md`.
+
+## Activation gate
+
+The scheduled task is not registered until all of the following are true:
+
+- The repository has an `origin` remote on GitHub.
+- `main` is green in the required-check workflow.
+- The five `security-*` checks exist and pass.
+- Branch protection requires all fourteen checks.
+- `GH_TOKEN` is set for the loop user with the least-privilege scopes.
+- A manual `-DryRun` selects exactly one approved issue.
+
+Run the preflight:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/install-scheduled-task.ps1
+```
+
+Run the dry run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/loop/run.ps1 -DryRun
+```
+
+Only then register the task with `-Activate`.
+
+## Dedicated user
+
+The task runs as the signed-in user in this version. A dedicated low-privilege Windows user is a human setup step; record it in `docs/security/agent-threat-model.md` before enabling unattended runs on a shared machine.
+
+## Pause and recovery
+
+- Create `PAUSE` to stop the next run.
+- The circuit breaker writes `PAUSE` and opens a `loop:blocked` issue after three consecutive failures.
+- A human fixes the cause, deletes `PAUSE`, and resets `.loop/state.json` before resuming.
+- `.loop/` and `PAUSE` are untracked; they never appear in a commit.
 ```
 
 - [ ] **Step 3: Commit**
@@ -2151,7 +2981,7 @@ git commit -m "chore: add release check, security policy, and changelog"
 - [ ] The service worker scope covers the app shell.
 - [ ] The offline reload works from the deployed Home Screen app.
 - [ ] The loop token is least-privilege and stored outside the repo.
-- [ ] Branch protection requires the nine checks.
+- [ ] Branch protection requires the fourteen checks.
 - [ ] The loop is paused until a human starts it.
 
 - [ ] **Step 2: Change visibility**
@@ -2217,7 +3047,7 @@ Record in `docs/operations/loop.md`:
 
 The operations plan is complete only when:
 
-- `main` is protected and the nine required checks are the source of merge truth.
+- `main` is protected and the fourteen required checks are the source of merge truth.
 - Pages deploys only after green CI and serves the app at the project path.
 - Visual baselines were generated on Ubuntu and pass in CI.
 - The loop selects one human-approved issue, enforces the limits, runs the gates, and opens a PR with evidence.

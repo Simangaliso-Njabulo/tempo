@@ -513,7 +513,7 @@ Techniques:
 - `env(safe-area-inset-top)` / `env(safe-area-inset-bottom)`.
 - Status bar: do not depend on translucency. Draw an opaque top band that matches the theme. On iOS 26.1’s regression, the app still looks intentional.
 - `theme-color` with `media="(prefers-color-scheme: dark)"` and light variants.
-- Inline critical CSS in `index.html`: theme background + wordmark, so there is no white flash before hydration.
+- A small self-hosted `public/boot.css` sets the theme background and wordmark before hydration. Production has no inline `<style>`, so the CSP can stay `style-src 'self'`. The dev server may inline for speed.
 - `apple-mobile-web-app-capable`, `apple-mobile-web-app-title`, `apple-touch-icon` 180×180.
 - Manifest: name, short_name, start_url, scope, display `standalone`, display_override `["standalone", "minimal-ui"]`, background_color, theme_color, 192/512/1024 icons, maskable icon.
 - Detect standalone via `navigator.standalone` and `matchMedia('(display-mode: standalone)')`.
