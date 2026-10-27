@@ -20,7 +20,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps webkit
-      - run: npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots
+      # `=all`, not the default "changed": a small but real change (removing a
+      # duplicated word inside a clipped 22 px row) falls under
+      # `maxDiffPixelRatio` and the old baseline would be kept silently.
+      - run: npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots=all
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: visual-baselines

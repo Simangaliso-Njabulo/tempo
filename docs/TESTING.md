@@ -133,8 +133,13 @@ Twenty baselines, all WebKit: empty and planned days at 375, 393, and 440 px in 
 ```powershell
 # Linux, matching the CI image
 docker run --rm -v "${PWD}:/work" -w /work mcr.microsoft.com/playwright:v1.64.1-noble `
-  npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots
+  npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots=all
 ```
+
+`=all` matters. The default (`changed`) keeps the existing baseline whenever the
+difference stays inside `maxDiffPixelRatio` (0.001), so a small but real change
+— a duplicated word inside a clipped 22 px row — would be silently ignored and
+the stale baseline uploaded.
 
 ## Lighthouse
 
