@@ -12,8 +12,10 @@ export default defineConfig({
     },
   },
   fullyParallel: false,
-  // Two browsers at a time keeps axe and the drag budget honest on 2-core CI
-  // runners; more workers starve each other and turn timing checks flaky.
+  // Two browsers at a time keeps axe honest on 2-core CI runners; more workers
+  // starve each other and turn timing checks flaky. The 50 ms drag budget is
+  // measured separately on a single worker (`npm run test:perf`), because a
+  // frame dropped by CPU contention is not a fact about the drag code.
   workers: 2,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',

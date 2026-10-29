@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -22,39 +23,60 @@ interface ToastApi {
 
 const ToastContext = createContext<ToastApi | null>(null);
 
+/**
+ * One toast at a time, queued (spec 7.13). An undo toast lives for six
+ * seconds, so a burst of writes never steals an undo affordance from the one
+ * before it. The queue is capped at the undo-history depth so a runaway loop
+ * cannot grow it without bound.
+ */
+const TOAST_MS = 6_000;
+const QUEUE_LIMIT = 20;
+
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [queue, setQueue] = useState<ToastState[]>([]);
+  const nextId = useRef(1);
+  const current = queue[0] ?? null;
 
   const show = useCallback((message: string, action?: { label: string; onAction: () => void }) => {
-    setToast({ id: Date.now(), message, actionLabel: action?.label, onAction: action?.onAction });
+    const id = nextId.current++;
+    setQueue((items) =>
+      [
+        ...items,
+        { id, message, actionLabel: action?.label, onAction: action?.onAction },
+      ].slice(-QUEUE_LIMIT),
+    );
+  }, []);
+
+  const dismiss = useCallback((id: number) => {
+    setQueue((items) => items.filter((item) => item.id !== id));
   }, []);
 
   // The context value is memoised so showing a toast does not hand every
-  // consumer a new object. Consumers react to `show`, which is stable; the
-  // toast itself renders from local state.
+  // consumer a new object. Consumers react to `show`, which is stable.
   const api = useMemo(() => ({ show }), [show]);
 
+  const currentId = current?.id ?? null;
   useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 5_000);
+    if (currentId === null) return;
+    const timer = window.setTimeout(() => dismiss(currentId), TOAST_MS);
     return () => window.clearTimeout(timer);
-  }, [toast]);
+  }, [currentId, dismiss]);
 
   return (
     <ToastContext.Provider value={api}>
       {children}
-      {toast ? (
-        <div className={styles.toast} role="status" aria-live="polite">
-          <span>{toast.message}</span>
-          {toast.actionLabel && toast.onAction ? (
+      {current ? (
+        <div key={current.id} className={styles.toast} role="status" aria-live="polite">
+          <span>{current.message}</span>
+          {current.actionLabel && current.onAction ? (
             <button
               type="button"
               onClick={() => {
-                toast.onAction?.();
-                setToast(null);
+                current.onAction?.();
+                dismiss(current.id);
               }}
             >
-              {toast.actionLabel}
+              {current.actionLabel}
             </button>
           ) : null}
         </div>

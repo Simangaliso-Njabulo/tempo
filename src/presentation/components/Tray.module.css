@@ -1,6 +1,8 @@
 .tray {
   position: relative;
   z-index: var(--tempo-z-tray);
+  display: flex;
+  flex-direction: column;
   background: var(--tempo-color-surface-1);
   border-top: 1px solid var(--tempo-color-line);
   padding: var(--tempo-space-2) var(--tempo-space-3) var(--tempo-space-3);
@@ -9,8 +11,23 @@
   overscroll-behavior: contain;
 }
 
+/* Children keep their natural height and the tray scrolls when they overflow. */
+.tray > * {
+  flex: 0 0 auto;
+}
+
 .collapsed {
   max-height: 154px;
+}
+
+/*
+ * The install hint is a footer with its own height. While it is showing, the
+ * collapsed tray grows just enough to keep the composer and the hint both
+ * visible; the toast measures the tray, so it stays above whichever height
+ * this resolves to.
+ */
+.collapsed.withHint {
+  max-height: 216px;
 }
 
 .expanded {
@@ -105,6 +122,13 @@
   font-size: var(--tempo-font-size-caption);
 }
 
+.meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--tempo-color-text-tertiary);
+  font-size: var(--tempo-font-size-caption);
+}
+
 .place,
 .skip {
   min-height: var(--tempo-hit-target);
@@ -149,4 +173,19 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/*
+ * Desktop / iPad landscape: the tray is the side column and is always open.
+ * It fills the column so its install footer sits at the bottom of the panel.
+ */
+@media (min-width: 1024px) {
+  .tray,
+  .tray.collapsed,
+  .tray.expanded {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    border-top: 0;
+  }
 }

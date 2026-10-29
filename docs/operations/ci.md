@@ -14,11 +14,11 @@
 | `build` | `ci.yml` | Production build and PWA artifacts |
 | `size` | `ci.yml` | JS, CSS, and font budgets |
 | `visual` | `ci.yml` | Dark and light screenshot regression |
-| `lighthouse` | `ci.yml` | Mobile Performance >= 95, Accessibility 100, Best Practices 100 |
+| `lighthouse` | `ci.yml` | Median of three runs: mobile Performance >= 95, Accessibility 100, Best Practices 100 |
 | `security-static` | `security.yml` | CodeQL `security-extended`, no high or critical finding |
-| `security-supply-chain` | `security.yml` | Dependency review, `npm audit`, OSV-Scanner, SBOM |
-| `security-workflows` | `security.yml` | `actionlint`, `zizmor`, full-SHA pins, least privilege |
-| `security-secrets` | `security.yml` | Gitleaks, plus GitHub secret scanning |
+| `security-supply-chain` | `security.yml` | Licence allowlist from the lockfile, `npm audit`, `npm run security:osv` (every OSV finding needs an unexpired waiver), SBOM |
+| `security-workflows` | `security.yml` | `actionlint`, `zizmor --offline`, full-SHA pins, least privilege |
+| `security-secrets` | `security.yml` | Gitleaks binary over full history, plus GitHub secret scanning |
 | `security-policy` | `security.yml` | CSP, protected paths, risk label, waivers, PR evidence |
 
 A red pull request is not merged. There is no merge-anyway button for a security check. An infrastructure emergency needs a recorded human override and a retrospective; the loop may never override a check.
@@ -33,6 +33,7 @@ typecheck     npm ci && npm run typecheck
 unit          npm ci && npm run test:coverage        (uploads coverage/)
 e2e           npm ci && playwright install --with-deps webkit
               npm run test:e2e -- --project=webkit-iphone
+              npm run test:perf -- --project=webkit-iphone   (single worker)
 a11y          same browser install
               npm run test:a11y -- --project=webkit-iphone
 build         npm ci && npm run build && npm run check:pwa

@@ -10,10 +10,12 @@ test('the production shell has a strict CSP and no third-party requests', async 
   await page.goto('/');
   await expect(page.getByText('TEMPO', { exact: true })).toBeVisible();
 
-  const csp = await page
-    .locator('meta[http-equiv="Content-Security-Policy"]')
-    .getAttribute('content');
-  expect(csp).toContain("default-src 'self'");
+  // Assert the element exists before reading it: `getAttribute` on a missing
+  // meta returns null, which produced a confusing "expected null to contain"
+  // failure instead of naming the missing policy.
+  const meta = page.locator('meta[http-equiv="Content-Security-Policy"]');
+  await expect(meta).toHaveAttribute('content', /default-src 'self'/);
+  const csp = (await meta.getAttribute('content')) ?? '';
   expect(csp).toContain("script-src 'self'");
   expect(csp).toContain("style-src 'self'");
   expect(csp).not.toContain("'unsafe-inline'");
@@ -23,7 +25,7 @@ test('the production shell has a strict CSP and no third-party requests', async 
 
   expect(await page.locator('script:not([src])').count()).toBe(0);
   expect(await page.locator('style').count()).toBe(0);
-  expect([...origins]).toEqual(['http://127.0.0.1:4173']);
+  expect([...origins]).toEqual([new URL(page.url()).origin]);
 });
 
 test('task text is rendered as text, never as markup', async ({ page }) => {

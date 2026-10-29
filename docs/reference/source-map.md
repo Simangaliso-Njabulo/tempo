@@ -22,7 +22,8 @@ Use this table before making a change. It is the fastest way to keep TEMPO consi
 | Accessibility | [UI/UX notes](ui-ux.md), [WCAG 2.2](https://www.w3.org/TR/WCAG22/), [HIG accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility), [A11y Project checklist](https://www.a11yproject.com/checklist/) | D-023, D-024 |
 | Performance | [UI/UX notes](ui-ux.md), [web.dev INP](https://web.dev/articles/inp), [Lighthouse](https://developer.chrome.com/docs/lighthouse/overview), [Testing](../TESTING.md#lighthouse) | D-020, D-024, D-036 |
 | Testing strategy, coverage, or a new test level | [Testing](../TESTING.md), [Controls](../security/controls.md), [Architecture](../ARCHITECTURE.md) | D-024, D-034 |
-| Human-facing help or onboarding copy | [Human guides](../human/README.md), [Design contract §7](../design/feel-contract.md), [HIG onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding) | D-019, D-021, D-026 |
+| Human-facing help or onboarding copy | [User guides](../human/user/install.md), [Docs hub](../human/README.md), [Developer docs](../human/developer/README.md), [Design contract §7](../design/feel-contract.md), [HIG onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding) | D-019, D-021, D-026 |
+| Understanding a feature, its data flow, or how CI gates it | [Developer docs](../human/developer/README.md), [Feature diagrams](../human/developer/features/README.md), [CI diagrams](../human/developer/ci.md), [Architecture](../ARCHITECTURE.md) | D-010, D-036, D-037, D-038 |
 | Documentation or the reference library | [Reference library](README.md), [AI index](../ai/README.md), [AGENTS.md](../../AGENTS.md) | D-026 |
 
 ## Conflict protocol

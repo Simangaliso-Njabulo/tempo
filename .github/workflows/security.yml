@@ -10,7 +10,6 @@ on:
 permissions:
   contents: read
   actions: read
-  security-events: write
   pull-requests: read
 
 concurrency:
@@ -28,6 +27,8 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - uses: github/codeql-action/init@2a2dd30f8030072d379eb0c9ea51789aa2ea9ca4 # v3.29.5
         with:
           languages: javascript-typescript
@@ -46,25 +47,38 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm audit --audit-level=high
-      - uses: actions/dependency-review-action@da24556b548a50705dd671f47852072ea4c105d9 # v4.7.1
-        if: github.event_name == 'pull_request'
+      # `actions/dependency-review-action` needs a GitHub API token and reports
+      # "Dependency review is not supported on this repository" whenever the
+      # installation rate limit is exhausted — a red gate with no finding. The
+      # licence half of that control is now checked from the lockfile, which
+      # needs no API; the vulnerability half is `npm audit` and OSV below, and
+      # Dependabot alerts still cover the diff.
+      - name: Check the production licence allowlist
+        run: npm run security:licenses
+      - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
-          fail-on-severity: high
-          comment-summary-in-pr: always
-          license-check: true
-          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
+          go-version: '1.24'
+          cache: false
       - name: Install OSV-Scanner
-        run: go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.0
-      - run: osv-scanner scan --lockfile=package-lock.json
+        run: |
+          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Scan the lockfile for known vulnerabilities
+        # Fail closed on every finding, then let only an unexpired, approved
+        # waiver in security/waivers/ cover a specific advisory ID. The scan
+        # itself is never narrowed: an expired or revoked waiver turns this
+        # red again, and security-policy separately validates that record.
+        run: npm run security:osv
       - run: npm run security:sbom
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -78,14 +92,31 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           go-version: '1.24'
           cache: false
-      - run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
-      - run: python3 -m pip install --user 'zizmor==1.15.0'
-      - run: actionlint
-      - run: python3 -m zizmor .github/workflows
+      - name: Install actionlint
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Install zizmor
+        run: |
+          python3 -m pip install --user 'zizmor==1.15.0'
+          echo "$(python3 -m site --user-base)/bin" >> "$GITHUB_PATH"
+      - name: Lint the workflow files
+        run: actionlint
+      # `--offline` runs every audit that needs no network. The five online
+      # audits (impostor-commit, ref-confusion, known-vulnerable-actions,
+      # stale-action-refs, ref-version-mismatch) skip themselves here and are
+      # covered instead by Dependabot on the `github-actions` ecosystem, the
+      # full-SHA pins enforced by check-policy.mjs, and the scheduled drift
+      # audit. Giving zizmor GH_TOKEN made the gate depend on the installation
+      # rate limit, which failed it with a 403 and no finding.
+      - name: Audit the workflows for known attack patterns
+        run: zizmor --offline .github/workflows
 
   security-secrets:
     name: security-secrets
@@ -94,10 +125,26 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          # `detect` walks the whole history, so it needs all of it.
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+          persist-credentials: false
+      # The Gitleaks *action* asks the GitHub API who it is and dies when the
+      # installation rate limit is exhausted, which fails the gate for reasons
+      # unrelated to the diff. The binary scans history locally with no token.
+      - name: Install Gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLo "$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "$archive" gitleaks
+          ./gitleaks version
+      - name: Scan the history for secrets
+        run: ./gitleaks detect --source . --redact --no-banner --exit-code 1
 
   security-policy:
     name: security-policy
@@ -107,6 +154,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22

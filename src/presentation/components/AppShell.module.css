@@ -93,17 +93,11 @@
     position: static;
     align-self: stretch;
     min-height: 0;
-    overflow: auto;
-    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     border-top: 0;
     border-left: 1px solid var(--tempo-color-line);
     padding-bottom: 0;
-  }
-
-  /* The tray is always open in the side column. */
-  .tray > div {
-    height: 100%;
-    max-height: none;
-    border-top: 0;
   }
 }

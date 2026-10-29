@@ -280,6 +280,29 @@ export function Settings({
           TEMPO keeps your plan on this device. No account, no tracking, no analytics.
         </p>
         <p className={styles.hint}>Version {version}</p>
+        {/*
+          * The app ships React, Dexie, and the Geist Sans subset, and each of
+          * those licences must travel with the build. Both files are checked by
+          * `npm run security:licenses`, so this list cannot drift.
+          */}
+        <div className={styles.actions}>
+          <a
+            className={styles.link}
+            href={`${import.meta.env.BASE_URL}licenses/THIRD-PARTY-NOTICES.txt`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Third-party notices
+          </a>
+          <a
+            className={styles.link}
+            href={`${import.meta.env.BASE_URL}licenses/geist-OFL.txt`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Geist Sans licence
+          </a>
+        </div>
       </section>
     </Sheet>
   );

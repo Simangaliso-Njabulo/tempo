@@ -28,7 +28,7 @@ TEMPO is a PWA. There is no App Store listing and no paid Apple Developer accoun
 
 The Home Screen app is the supported experience: full-height timeline, no browser chrome, works offline after the first load. After the second block is planned, a small install hint appears in the tray footer; it is dismissible and never blocks the first run.
 
-Step-by-step help lives in [docs/human/](docs/human/README.md).
+Step-by-step help lives in [docs/human/user/](docs/human/user/install.md). Diagram-first developer docs — architecture, data model, CI, security, release, and one page per feature — live in [docs/human/developer/](docs/human/developer/README.md).
 
 ## Develop
 
@@ -113,7 +113,7 @@ Operator guide: [docs/loop/README.md](docs/loop/README.md). Run log: [docs/loop/
 │  ├─ design/                # feel contract, visual board, decision log
 │  ├─ reference/             # reference library and source map
 │  ├─ security/              # threat models, controls, verification, ASVS
-│  ├─ human/                 # install, planning, backup, privacy, shortcuts
+│  ├─ human/                 # user guides and diagram-first developer docs
 │  ├─ ai/                    # the agent fast path
 │  ├─ operations/            # repository, CI, release, loop operations
 │  ├─ loop/                  # loop operator guide and run log
@@ -140,3 +140,11 @@ Operator guide: [docs/loop/README.md](docs/loop/README.md). Run log: [docs/loop/
 ## License
 
 MIT — see [LICENSE](LICENSE). Copyright 2026 Simangaliso Njabulo Madonsela.
+
+TEMPO ships third-party code and one font, so their licences ship too:
+[`public/licenses/THIRD-PARTY-NOTICES.txt`](public/licenses/THIRD-PARTY-NOTICES.txt)
+(React, React DOM, Scheduler — MIT; Dexie, Dexie React Hooks — Apache-2.0) and
+[`public/licenses/geist-OFL.txt`](public/licenses/geist-OFL.txt) (Geist Sans,
+OFL-1.1). Both are linked from Settings → About and are precached for offline
+reading. `npm run security:licenses` fails when a shipped package is added or
+removed without the notices being updated.

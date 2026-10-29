@@ -54,7 +54,7 @@ That is enforceable. Perfect detection is not.
 ### Before merge
 
 - All required checks are green.
-- New dependencies pass dependency review and are recorded in `docs/reference/stack.md`.
+- New dependencies pass the licence allowlist (`npm run security:licenses`), `npm audit`, and `npm run security:osv`, and are recorded in `docs/reference/stack.md`. The OSV scan fails on every finding unless an unexpired, approved waiver in `security/waivers/` names that advisory ([D-039](../design/decisions.md)). A dependency that ships to the device must also be named in `public/licenses/THIRD-PARTY-NOTICES.txt`, and the gate fails until it is.
 - Security-sensitive changes have human review.
 - The PR names the control IDs, decision IDs, references, verification, and anything not verified.
 - The loop cannot auto-merge a security, dependency, workflow, storage, permission, or release change.

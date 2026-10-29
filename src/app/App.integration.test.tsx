@@ -197,7 +197,12 @@ integrationTest('closes the day and keeps an unfinished task for tomorrow', asyn
   const dialog = await screen.findByRole('dialog', { name: 'Close the day' });
   await user.click(within(dialog).getByRole('button', { name: 'Keep for tomorrow' }));
 
-  expect(await screen.findByText('Kept for tomorrow.')).toBeInTheDocument();
+  // Toasts are queued (feel contract 4.5), so this confirmation follows the
+  // placement undo toast instead of replacing it. The sheet already shows the
+  // move inline, so the queue only delays the redundant announcement.
+  expect(
+    await screen.findByText('Kept for tomorrow.', {}, { timeout: 10_000 }),
+  ).toBeInTheDocument();
   // The kept block leaves today, so the sheet reports the move and empties.
   expect(within(dialog).getByText(/1 moved/)).toBeInTheDocument();
   expect(within(dialog).getByText('Everything is settled. Close the day.')).toBeInTheDocument();

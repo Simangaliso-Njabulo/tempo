@@ -66,7 +66,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,webmanifest}'],
+        // `txt` covers the licence notices: they are part of what ships, so they
+        // must be readable offline like the rest of the shell.
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,webmanifest,txt}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         clientsClaim: false,

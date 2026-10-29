@@ -18,15 +18,18 @@ npm run test              # every Vitest file, no coverage
 npm run test:watch        # watch mode while editing
 npm run test:domain       # domain files only, with the 95% domain threshold
 npm run test:coverage     # every Vitest file with the overall threshold
-npm run test:e2e          # Playwright, both projects
+npm run test:e2e          # Playwright, both projects, minus @visual and @performance
 npm run test:e2e:webkit   # Playwright, iPhone 13 WebKit only (the CI project)
+npm run test:perf         # the 50 ms drag budget, one worker so frames are not starved
 npm run test:a11y         # axe scans, tagged @a11y
 npm run test:visual       # dark and light screenshot regression
 npm run lighthouse        # Lighthouse against the production preview
 npm run verify            # typecheck, lint, unit, build, size, PWA artifacts
 ```
 
-`npm run verify` is the fast, deterministic gate. `npm run verify:full` adds coverage and e2e on the host machine.
+`npm run verify` is the fast, deterministic gate. `npm run verify:full` adds coverage, e2e, the drag budget, and Lighthouse on the host machine.
+
+The drag budget is not part of `test:e2e` on purpose. It measures the app, not the machine: two browsers sharing two CI cores once produced a 61 ms frame in code that had not changed. `npm run test:perf` runs those two tests on a single worker with the same 50 ms limit.
 
 ## Thresholds
 
@@ -87,15 +90,16 @@ Both run against `vite preview` on port 4173 with the production build. The suit
 
 | File | Proves |
 |---|---|
-| `first-run.spec.ts` | Brain dump, drag to the timeline, undo, and the non-drag **Place** path |
+| `first-run.spec.ts` | Brain dump, drag to the timeline, undo, the non-drag **Place** path, and the install hint as a footer that never covers the composer |
 | `reflow-undo.spec.ts` | Overrun previews, applies, and undoes; a completed overrun does not ask |
 | `carry-over.spec.ts` | Unfinished work returns at midnight with **Carried over**; finished work does not |
 | `backup.spec.ts` | Export, reset, and import restores the local day |
 | `offline.spec.ts` | The cached shell reloads with the network disabled |
 | `security.spec.ts` | Strict CSP, no third-party request, task text rendered as text |
-| `performance.spec.ts` | Drag stays inside the long-frame and DOM budgets, including reduced motion |
-| `a11y.spec.ts` | axe has zero serious or critical issues (`@a11y`) |
-| `visual.spec.ts` | Dark and light screenshots match their baselines |
+| `performance.spec.ts` | Drag stays inside the long-frame and DOM budgets, including reduced motion (`@performance`, run by `test:perf` on one worker) |
+| `toast.spec.ts` | The undo toast sits above the tray and never covers its controls |
+| `a11y.spec.ts` | axe has zero serious or critical issues (`@a11y`); every visible target is at least 44 by 44 |
+| `visual.spec.ts` | Dark and light screenshots match their baselines, phone and desktop |
 
 Helpers live in `tests/e2e/helpers.ts`. They seed a fixed date, place blocks through the real UI, and freeze the clock.
 
@@ -120,6 +124,8 @@ The manual checks that automation cannot cover:
 
 Baselines are platform-specific. Windows screenshots must not be committed; they will not match Linux rendering.
 
+Twenty baselines, all WebKit: empty and planned days at 375, 393, and 440 px in both themes, the add sheet, the reflow preview, the carried tray, and a 1280 px desktop day in both themes (the side-column layout from the feel contract). `visual.spec.ts` skips the Chromium project because the baseline set is deliberately one engine, so `npm run test:visual` behaves the same locally as in CI.
+
 - Update baselines only through the **Visual baselines** workflow (`.github/workflows/visual-baselines.yml`), which runs on `ubuntu-latest`, or on a Linux host with the same Playwright Docker image.
 - Locally on Windows, run `npm run test:visual` to see the diff and the report, and read the failure as "my change moved a pixel", not as "the baseline is wrong".
 - A visual change needs a screenshot in the pull request.
@@ -127,12 +133,19 @@ Baselines are platform-specific. Windows screenshots must not be committed; they
 ```powershell
 # Linux, matching the CI image
 docker run --rm -v "${PWD}:/work" -w /work mcr.microsoft.com/playwright:v1.64.1-noble `
-  npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots
+  npx playwright test tests/e2e/visual.spec.ts --project=webkit-iphone --update-snapshots=all
 ```
+
+`=all` matters. The default (`changed`) keeps the existing baseline whenever the
+difference stays inside `maxDiffPixelRatio` (0.001), so a small but real change
+— a duplicated word inside a clipped 22 px row — would be silently ignored and
+the stale baseline uploaded.
 
 ## Lighthouse
 
 `scripts/lighthouse.mjs` starts the production preview, runs Lighthouse with the mobile preset, writes `lighthouse-report.html`, and asserts mobile Performance >= 95, Accessibility 100, and Best Practices 100. SEO is not asserted: TEMPO is an app shell, not a crawlable site.
+
+It runs three times and gates the median of each category. A shared CI runner is occasionally descheduled mid-task: one run reported a 1904 ms long task for a bundle that takes 114 ms of scripting on a quiet machine. The floors are unchanged and every sample is printed, so a real regression still shows up in all three runs. `LIGHTHOUSE_RUNS` must be an odd number, 3 or more.
 
 It uses the pinned `lighthouse` dev dependency rather than `@lhci/cli`, because the LHCI tree carried high advisories that would fail `security-supply-chain` (D-036). Set `CHROME_PATH` when Chrome is not on the default path.
 

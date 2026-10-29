@@ -5,6 +5,11 @@ const themes = ['dark', 'light'] as const;
 const widths = [375, 393, 440] as const;
 
 test.describe('visual @visual', () => {
+  // Baselines are generated and reviewed on WebKit only. It is the engine the
+  // iOS target actually runs, it is what CI compares, and one engine keeps the
+  // baseline set small enough for a human to review every image.
+  test.skip(({ browserName }) => browserName !== 'webkit', 'WebKit-only baselines');
+
   for (const theme of themes) {
     for (const width of widths) {
       test(`empty day ${theme} at ${width}px`, async ({ page }) => {
@@ -32,6 +37,24 @@ test.describe('visual @visual', () => {
         await expect(page).toHaveScreenshot(`planned-${theme}-${width}.png`, { fullPage: true });
       });
     }
+
+    test(`desktop planned day ${theme}`, async ({ page }) => {
+      // The desktop layout is the third column in the feel contract: the tray
+      // becomes a side panel at 1024 px and up, so it needs its own baseline.
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+      await page.clock.install({ time: new Date('2026-10-25T08:30:00') });
+      await page.goto('/');
+      await addFocusBlock(page, { title: 'Deep work', start: '09:00', duration: '60' });
+      await addFocusBlock(page, { title: 'Review', start: '10:00' });
+      await page.getByLabel('Brain dump').fill('Draft the launch note');
+      await page.getByLabel('Brain dump').press('Enter');
+      await expect(
+        page.getByRole('button', { name: 'Draft the launch note', exact: true }),
+      ).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page).toHaveScreenshot(`desktop-${theme}.png`, { fullPage: true });
+    });
 
     test(`add sheet ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 393, height: 844 });
