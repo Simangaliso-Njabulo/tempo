@@ -66,7 +66,7 @@ sequenceDiagram
 | `visual` | `npm run test:visual` | 20 WebKit baselines, `maxDiffPixelRatio 0.001` |
 | `lighthouse` | `npm run build && npm run lighthouse` | median of three runs ≥95/100/100 ([D-036](../../design/decisions.md)) |
 | `security-static` | CodeQL in CI + `npm run lint` | code scanning |
-| `security-supply-chain` | `npm run security:deps && npm run security:licenses` | OSV-Scanner, npm audit, licence allowlist |
+| `security-supply-chain` | `npm run security:deps && npm run security:licenses && npm run security:osv` | OSV-Scanner (every finding needs an unexpired waiver), npm audit, licence allowlist |
 | `security-workflows` | `npm run security:workflows` + `zizmor --offline .github/workflows` | workflow lint and audit |
 | `security-secrets` | `npm run security:secrets` | gitleaks over full history |
 | `security-policy` | `npm run build && npm run security:policy` | CSP, no inline script, no third-party origin |
@@ -87,6 +87,23 @@ flowchart LR
     C --> N2
     N2 --> DA["nightly drift-audit verifies settings"]
 ```
+
+## When a dependency advisory has no fix
+
+The OSV scan is strict, and a strict scan still needs a way to say "accepted for now". That is what a waiver is — dated, owned, expiring, and validated twice.
+
+```mermaid
+flowchart LR
+    SCAN["osv-scanner reads package-lock.json"] --> Q{"any finding?"}
+    Q -- no --> PASS["pass"]
+    Q -- yes --> W{"a status approved waiver names the advisory and has not expired?"}
+    W -- yes --> PASS2["pass, expiry printed in the log"]
+    W -- no --> RED["security-supply-chain fails"]
+    EXP["waiver expires"] --> W
+    POL["security-policy also validates the record"] --> W
+```
+
+The scan is never narrowed by severity or by dev/prod, so a new advisory still turns the check red until a human approves a waiver or a fix lands ([D-039](../../design/decisions.md)).
 
 ## Other workflows
 

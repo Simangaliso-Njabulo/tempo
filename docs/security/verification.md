@@ -36,7 +36,7 @@ A security claim needs evidence. The evidence is a command and its result, a tes
 | Secret scanning | Continuous, platform | A pushed secret is detected | Revoke, rotate, incident |
 | `drift-audit` | Daily | Branch protection, required checks, pins, scanning, waivers, attestations, Scorecard | Open `security:drift`, apply `loop:paused`, fail |
 | OpenSSF Scorecard | Weekly | Repository hardening signals | Review findings; not a vanity score |
-| OSV-Scanner | On PR and daily | Known vulnerabilities beyond npm audit | Block or waiver |
+| OSV-Scanner | On PR and daily | Known vulnerabilities beyond npm audit | Every finding fails the gate unless an unexpired, approved waiver in `security/waivers/` names that advisory ID ([D-039](../design/decisions.md)) |
 | SBOM + provenance | Every release | Artifact contents and build origin | Block release |
 
 ## Local commands
@@ -65,10 +65,11 @@ Target `package.json` additions:
 {
   "scripts": {
     "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run size && npm run check:pwa && npm run security:policy",
-    "verify:security": "npm run security:policy && npm run security:deps && npm run security:licenses && npm run security:workflows && npm run security:secrets",
+    "verify:security": "npm run security:policy && npm run security:deps && npm run security:licenses && npm run security:osv && npm run security:workflows && npm run security:secrets",
     "security:policy": "node scripts/security/check-policy.mjs",
-    "security:deps": "npm audit --audit-level=high && osv-scanner scan --lockfile=package-lock.json",
+    "security:deps": "npm audit --audit-level=high",
     "security:licenses": "node scripts/security/check-licenses.mjs",
+    "security:osv": "node scripts/security/check-osv.mjs",
     "security:workflows": "actionlint && zizmor --offline .github/workflows",
     "security:secrets": "gitleaks detect --source . --redact --no-banner",
     "security:sbom": "cyclonedx-npm --output-file sbom.cdx.json"
@@ -91,6 +92,15 @@ Three required checks used to fail for reasons unrelated to the change, because 
 A gate that is red for infrastructure reasons is a false signal: it trains people to ignore the check. None of the replacements weakens a threshold — the licence allowlist is stricter than the one dependency review was configured with, because it is enforced on every run rather than only when the API happens to answer. See D-038 in the decision log.
 
 The remaining API-dependent checks are the ones that must be: CodeQL upload, OSV-Scanner's advisory database over the network, and the scheduled drift audit. A failure there is a real failure and is handled as one.
+
+### A finding that has no available fix
+
+`npm run security:osv` runs `osv-scanner scan -L package-lock.json --format json` and then fails on **every** finding that is not named by an unexpired `status: approved` waiver in `security/waivers/` ([D-039](../design/decisions.md)).
+
+- The scan is never narrowed: no severity threshold, no dev-only exemption, no ignore file.
+- An expired, revoked, or malformed waiver covers nothing, so a stale exception turns the gate red again.
+- `security-policy` independently validates each waiver's schema, severity, dates, approver, and 30/90-day limit, so the two checks cannot quietly disagree.
+- Without the `osv-scanner` binary on `PATH`, the script fails closed; the CI check remains the source of truth.
 
 ## Artifact inspection
 

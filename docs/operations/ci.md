@@ -16,7 +16,7 @@
 | `visual` | `ci.yml` | Dark and light screenshot regression |
 | `lighthouse` | `ci.yml` | Median of three runs: mobile Performance >= 95, Accessibility 100, Best Practices 100 |
 | `security-static` | `security.yml` | CodeQL `security-extended`, no high or critical finding |
-| `security-supply-chain` | `security.yml` | Licence allowlist from the lockfile, `npm audit`, OSV-Scanner, SBOM |
+| `security-supply-chain` | `security.yml` | Licence allowlist from the lockfile, `npm audit`, `npm run security:osv` (every OSV finding needs an unexpired waiver), SBOM |
 | `security-workflows` | `security.yml` | `actionlint`, `zizmor --offline`, full-SHA pins, least privilege |
 | `security-secrets` | `security.yml` | Gitleaks binary over full history, plus GitHub secret scanning |
 | `security-policy` | `security.yml` | CSP, protected paths, risk label, waivers, PR evidence |

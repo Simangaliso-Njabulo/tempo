@@ -40,7 +40,7 @@ flowchart LR
     SRC["source tree"] --> P1["security-policy - check-policy.mjs on the built artifact"]
     SRC --> P2["security-secrets - gitleaks over full history"]
     WF[".github/workflows"] --> P3["security-workflows - actionlint + zizmor --offline"]
-    LOCK["package-lock.json"] --> P4["security-supply-chain - npm audit, OSV, licence allowlist"]
+    LOCK["package-lock.json"] --> P4["security-supply-chain - npm audit, OSV plus waiver, licence allowlist"]
     P1 --> OK["green required check"]
     P2 --> OK
     P3 --> OK
@@ -54,5 +54,7 @@ flowchart LR
 ## Waivers
 
 Agents may never create, extend, or delete a waiver or attestation. Critical is never waivable; high ≤30 days, medium ≤90 days. An expired record fails `security-policy` and pauses the loop.
+
+`npm run security:osv` reads the same directory: a dependency finding stays red until an unexpired approved waiver names that advisory, and the waiver stops covering it the day it expires ([D-039](../../design/decisions.md)).
 
 Detail: [docs/security/README.md](../../security/README.md), [controls](../../security/controls.md), [threat model](../../security/threat-model.md).

@@ -74,7 +74,11 @@ jobs:
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.0
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Scan the lockfile for known vulnerabilities
-        run: osv-scanner scan -L package-lock.json
+        # Fail closed on every finding, then let only an unexpired, approved
+        # waiver in security/waivers/ cover a specific advisory ID. The scan
+        # itself is never narrowed: an expired or revoked waiver turns this
+        # red again, and security-policy separately validates that record.
+        run: npm run security:osv
       - run: npm run security:sbom
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
