@@ -2570,11 +2570,11 @@ Short, visual, scannable. A person should be able to install, plan a day, back u
 Planned human docs:
 
 - `README.md` — what TEMPO is, how to run it, where the source of truth lives.
-- `docs/human/install.md` — install on iPhone, standalone vs Safari, update behavior.
-- `docs/human/planning.md` — brain dump, place, routines, reflow, close the day, carry-over.
-- `docs/human/backup.md` — export/import, storage, what is not cloud-synced.
-- `docs/human/privacy.md` — local-only, no tracking, no accounts, no push.
-- `docs/human/shortcuts.md` — keyboard and VoiceOver actions.
+- `docs/human/user/install.md` — install on iPhone, standalone vs Safari, update behavior.
+- `docs/human/user/planning.md` — brain dump, place, routines, reflow, close the day, carry-over.
+- `docs/human/user/backup.md` — export/import, storage, what is not cloud-synced.
+- `docs/human/user/privacy.md` — local-only, no tracking, no accounts, no push.
+- `docs/human/user/shortcuts.md` — keyboard and VoiceOver actions.
 - A one-page visual overview with the day view, reflow preview, and carried-over tray.
 
 Rules:
